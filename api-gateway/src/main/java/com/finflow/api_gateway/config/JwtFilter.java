@@ -5,6 +5,7 @@ package com.finflow.api_gateway.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -23,24 +24,26 @@ public class JwtFilter implements GlobalFilter {
         String path = exchange.getRequest().getURI().getPath();
         System.out.println("Request Path: " + path);
 
-        // ✅ allow public APIs
-        if (path.contains("/auth") || path.contains("/applications/test")) {
+        //  allow public APIs
+        if (path.startsWith("/auth") || path.contains("/test") || path.contains("/documents")){
             return chain.filter(exchange);
         }
 
-        // 🔐 check token
+        // check token
         String authHeader = exchange.getRequest()
                 .getHeaders()
                 .getFirst("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("No Token");
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7);
 
         if (!jwtService.validateToken(token)) {
-            throw new RuntimeException("Invalid Token");
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
         return chain.filter(exchange);

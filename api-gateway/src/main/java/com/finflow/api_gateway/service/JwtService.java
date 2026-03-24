@@ -12,6 +12,7 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
+    
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
