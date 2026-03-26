@@ -4,6 +4,8 @@ package com.finflow.auth_service.UTIL;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -26,8 +28,12 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
+
         return Jwts.builder()
+                .setClaims(claims)
                 .setSubject(email)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
@@ -54,5 +60,16 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public String extractRole(String token) {
+        Object role = Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role");
+
+        return role == null ? null : role.toString();
     }
 }

@@ -20,8 +20,11 @@ import com.finflow.admin_service.dto.UserUpdateDTO;
 import com.finflow.admin_service.entity.Application;
 import com.finflow.admin_service.service.AdminService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 @RestController
 @RequestMapping("/admin")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
     @Autowired

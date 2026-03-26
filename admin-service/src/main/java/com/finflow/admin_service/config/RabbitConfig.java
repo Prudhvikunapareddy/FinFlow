@@ -10,10 +10,16 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 public class RabbitConfig {
 
     public static final String QUEUE = "application_queue";
+    public static final String STATUS_UPDATE_QUEUE = "application_status_update_queue";
 
     @Bean
     public Queue queue() {
         return new Queue(QUEUE);
+    }
+
+    @Bean
+    public Queue statusUpdateQueue() {
+        return new Queue(STATUS_UPDATE_QUEUE);
     }
 
     //  VERY IMPORTANT (for object conversion)

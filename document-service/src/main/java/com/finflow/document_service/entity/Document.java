@@ -20,4 +20,5 @@ public class Document {
     private byte[] data;
 
     private Long applicationId;
+    private String uploadedByEmail;
 }

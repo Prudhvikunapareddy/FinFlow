@@ -2,6 +2,8 @@ package com.finflow.auth_service.SERVICE_LAYER;
 
 
 
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,11 +27,13 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     public String signup(SignupRequest request) {
-    	if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        String email = request.getEmail().trim();
+
+    	if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already registered!");
         }
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("USER");
 
@@ -48,6 +52,6 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        return jwtUtil.generateToken(user.getEmail());
+        return jwtUtil.generateToken(user.getEmail(), user.getRole().trim().toUpperCase(Locale.ROOT));
     }
 }

@@ -27,10 +27,11 @@ public class ApplicationService {
     private RabbitTemplate rabbitTemplate;
 
     public ApplicationResponseDTO create(ApplicationRequestDTO dto, String email) {
+        String applicantEmail = requireEmail(email);
 
         LoanApplication app = modelMapper.map(dto, LoanApplication.class);
 
-        app.setApplicantName(email);
+        app.setApplicantName(applicantEmail);
         app.setStatus("DRAFT");
 
         LoanApplication saved = repository.save(app);
@@ -38,10 +39,14 @@ public class ApplicationService {
         return modelMapper.map(saved, ApplicationResponseDTO.class);
     }
     public ApplicationResponseDTO getById(Long id) {
-
         LoanApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
+        return modelMapper.map(app, ApplicationResponseDTO.class);
+    }
+
+    public ApplicationResponseDTO getByIdForUser(Long id, String email) {
+        LoanApplication app = getOwnedApplication(id, email);
         return modelMapper.map(app, ApplicationResponseDTO.class);
     }
     
@@ -56,11 +61,24 @@ public class ApplicationService {
 
         return modelMapper.map(updated, ApplicationResponseDTO.class);
     }
+
+    public ApplicationResponseDTO updateForUser(Long id, ApplicationRequestDTO dto, String email) {
+        LoanApplication app = getOwnedApplication(id, email);
+        app.setAmount(dto.getAmount());
+        LoanApplication updated = repository.save(app);
+        return modelMapper.map(updated, ApplicationResponseDTO.class);
+    }
+
     public void delete(Long id) {
 
         LoanApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
+        repository.delete(app);
+    }
+
+    public void deleteForUser(Long id, String email) {
+        LoanApplication app = getOwnedApplication(id, email);
         repository.delete(app);
     }
 
@@ -71,10 +89,16 @@ public class ApplicationService {
                 .toList();
     }
 
+    public List<ApplicationResponseDTO> getAllForUser(String email) {
+        String applicantEmail = requireEmail(email);
+        return getMyApplications(applicantEmail);
+    }
+
     public ApplicationResponseDTO submit(Long id, String email) {
+        String applicantEmail = requireEmail(email);
         LoanApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-        if(email != null && !app.getApplicantName().equals(email)) {
+        if (!app.getApplicantName().equals(applicantEmail)) {
             throw new RuntimeException("Unauthorized");
         }
         app.setStatus("SUBMITTED");
@@ -103,5 +127,32 @@ public class ApplicationService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         return app.getStatus();
     }
-    
+
+    public String getStatusForUser(Long id, String email) {
+        return getOwnedApplication(id, email).getStatus();
+    }
+
+    public LoanApplication getApplicationForInternalUse(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+    }
+
+    private String requireEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Authenticated user email is required");
+        }
+        return email;
+    }
+
+    private LoanApplication getOwnedApplication(Long id, String email) {
+        String applicantEmail = requireEmail(email);
+        LoanApplication app = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        if (!applicantEmail.equals(app.getApplicantName())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        return app;
+    }
 }

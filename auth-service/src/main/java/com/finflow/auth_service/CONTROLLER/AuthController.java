@@ -1,6 +1,7 @@
 package com.finflow.auth_service.CONTROLLER;
 
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,12 +20,12 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/signup")
-    public String signup(@RequestBody SignupRequest request) {
+    public String signup(@Valid @RequestBody SignupRequest request) {
         return authService.signup(request);
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
+    public String login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 }

@@ -1,0 +1,70 @@
+package com.finflow.admin_service.config;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class JwtAuthorizationFilter extends OncePerRequestFilter {
+
+    private final JwtService jwtService;
+
+    public JwtAuthorizationFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return HttpMethod.OPTIONS.matches(request.getMethod())
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/webjars")
+                || "/swagger-ui.html".equals(path);
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
+
+        String token = authHeader.substring(7);
+        if (!jwtService.validateToken(token)) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
+
+        String role = jwtService.extractRole(token);
+        if (role == null || !"ADMIN".equals(role.trim().toUpperCase(Locale.ROOT))) {
+            response.setStatus(HttpStatus.FORBIDDEN.value());
+            return;
+        }
+
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                "admin",
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
+    }
+}
