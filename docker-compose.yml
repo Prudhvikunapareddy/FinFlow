@@ -1,0 +1,218 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: finflow-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: finflow-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  zipkin:
+    image: openzipkin/zipkin:3.5.1
+    container_name: finflow-zipkin
+    ports:
+      - "9412:9411"
+
+  service-registry:
+    build:
+      context: ./service-registry
+    container_name: finflow-service-registry
+    depends_on:
+      zipkin:
+        condition: service_started
+    environment:
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+    ports:
+      - "9761:8761"
+
+  config-server:
+    build:
+      context: ./config-server
+    container_name: finflow-config-server
+    depends_on:
+      service-registry:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      CONFIG_REPO_LOCATION: file:/config-repo
+    volumes:
+      - ./config-repo:/config-repo:ro
+    ports:
+      - "9888:8888"
+
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: finflow-auth-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      config-server:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: auth-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+    restart: on-failure
+    ports:
+      - "9081:8081"
+
+  application-service:
+    build:
+      context: ./application-service
+    container_name: finflow-application-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      config-server:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: application-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+    restart: on-failure
+    ports:
+      - "9084:8084"
+
+  document-service:
+    build:
+      context: ./document-service
+    container_name: finflow-document-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      config-server:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: document-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      APPLICATION_SERVICE_URL: http://APPLICATION-SERVICE
+    restart: on-failure
+    ports:
+      - "9085:8085"
+
+  admin-service:
+    build:
+      context: ./admin-service
+    container_name: finflow-admin-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      service-registry:
+        condition: service_started
+      config-server:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: admin-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest
+      DOCUMENT_SERVICE_URL: http://DOCUMENT-SERVICE
+    restart: on-failure
+    ports:
+      - "9086:8086"
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: finflow-api-gateway
+    depends_on:
+      service-registry:
+        condition: service_started
+      config-server:
+        condition: service_started
+      auth-service:
+        condition: service_started
+      application-service:
+        condition: service_started
+      document-service:
+        condition: service_started
+      admin-service:
+        condition: service_started
+      zipkin:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+    ports:
+      - "9083:8083"
+
+volumes:
+  postgres-data:
