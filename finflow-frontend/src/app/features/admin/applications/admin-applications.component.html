@@ -1,0 +1,63 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>Admin Applications</h1>
+      <p>Review every application currently moving through the FinFlow decision pipeline.</p>
+    </div>
+
+    <div class="filter-bar">
+      <label class="field-label" for="admin-status-filter">Filter by status</label>
+      <select
+        id="admin-status-filter"
+        class="field-select"
+        [value]="filter()"
+        (change)="onFilterChange(($any($event.target)).value)"
+      >
+        @for (option of filterOptions; track option) {
+          <option [value]="option">{{ option === 'ALL' ? 'All statuses' : option.replaceAll('_', ' ') }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <section class="surface-panel table-shell">
+    @if (loading()) {
+      <div class="empty-state">Loading admin applications...</div>
+    } @else if (filteredApplications().length) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Loan Name</th>
+            <th>Applicant</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (application of filteredApplications(); track application.id) {
+            <tr>
+              <td>#{{ application.id }}</td>
+              <td>{{ application.name }}</td>
+              <td>{{ application.applicantName }}</td>
+              <td>{{ (application.amount ?? 0) | currencyInr }}</td>
+              <td>
+                <app-status-badge [status]="application.status" />
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a class="button button-secondary button-sm" [routerLink]="['/admin/applications', application.id]">
+                    Review
+                  </a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">No applications match the selected filter.</div>
+    }
+  </section>
+</section>

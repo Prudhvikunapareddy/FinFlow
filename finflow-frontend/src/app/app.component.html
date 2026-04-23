@@ -1,0 +1,9 @@
+@if (showNavbar()) {
+  <app-navbar />
+}
+
+<div class="app-stage" [class.with-navbar]="showNavbar()">
+  <router-outlet />
+</div>
+
+<app-toast-outlet />

@@ -1,0 +1,30 @@
+<header class="navbar">
+  <div class="navbar__brand">
+    <a [routerLink]="homeLink()" class="navbar__logo">
+      <span class="navbar__mark">F</span>
+      <span>FinFlow</span>
+    </a>
+  </div>
+
+  <nav class="navbar__nav">
+    @if (isAdmin()) {
+      <a routerLink="/admin/applications" routerLinkActive="is-active" class="navbar__link">Applications</a>
+      <a routerLink="/admin/users" routerLinkActive="is-active" class="navbar__link">Users</a>
+    } @else {
+      <a routerLink="/dashboard" routerLinkActive="is-active" class="navbar__link">Dashboard</a>
+      <a routerLink="/applications" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="is-active" class="navbar__link">Applications</a>
+      <a routerLink="/applications/new" routerLinkActive="is-active" class="navbar__link">Apply</a>
+    }
+  </nav>
+
+  <div class="navbar__user">
+    <div class="navbar__identity">
+      <span class="navbar__role">{{ authService.getRole() }}</span>
+      <span class="navbar__email">{{ authService.getEmail() }}</span>
+    </div>
+
+    <button type="button" class="button button-secondary navbar__logout" (click)="logout()">
+      Logout
+    </button>
+  </div>
+</header>

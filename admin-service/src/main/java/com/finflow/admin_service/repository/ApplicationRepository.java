@@ -15,16 +15,20 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     @Modifying
     @Transactional
     @Query(value = """
-            insert into application (id, name, status)
-            values (:id, :name, :status)
+            insert into application (id, name, applicant_name, amount, status)
+            values (:id, :name, :applicantName, :amount, :status)
             on conflict (id) do update
             set name = excluded.name,
+                applicant_name = excluded.applicant_name,
+                amount = excluded.amount,
                 status = excluded.status
             """, nativeQuery = true)
-    void upsertApplication(@Param("id") Long id, @Param("name") String name, @Param("status") String status);
+    void upsertApplication(
+            @Param("id") Long id,
+            @Param("name") String name,
+            @Param("applicantName") String applicantName,
+            @Param("amount") Double amount,
+            @Param("status") String status);
 
     long countByStatus(String status);
-
-    @Query("select distinct a.name from Application a where a.name is not null order by a.name")
-    List<String> findDistinctApplicantNames();
 }

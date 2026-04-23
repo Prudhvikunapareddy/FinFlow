@@ -16,11 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finflow.admin_service.dto.DecisionRequestDTO;
+import com.finflow.admin_service.dto.UserResponseDTO;
 import com.finflow.admin_service.dto.UserUpdateDTO;
 import com.finflow.admin_service.entity.Application;
 import com.finflow.admin_service.service.AdminService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/admin")
@@ -41,7 +43,7 @@ public class AdminController {
     }
 
     @PostMapping("/applications/{id}/decision")
-    public Application decision(@PathVariable Long id, @RequestBody DecisionRequestDTO payload) {
+    public Application decision(@PathVariable Long id, @Valid @RequestBody DecisionRequestDTO payload) {
         String status = payload.getStatus();
         return service.decision(id, status);
     }
@@ -57,12 +59,12 @@ public class AdminController {
     }
 
     @GetMapping("/users")
-    public List<String> getUsers() {
+    public List<UserResponseDTO> getUsers() {
         return service.getUsers();
     }
 
     @PutMapping("/users/{id}")
-    public String updateUser(@PathVariable Long id, @RequestBody UserUpdateDTO payload) {
+    public UserResponseDTO updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO payload) {
         return service.updateUser(id, payload.getRole());
     }
 }

@@ -49,11 +49,14 @@ public class GlobalExceptionHandler {
             return HttpStatus.BAD_REQUEST;
         }
         String normalized = message.toLowerCase();
+        if (normalized.contains("invalid password")) {
+            return HttpStatus.BAD_REQUEST;
+        }
+        if (normalized.contains("user not found")) {
+            return HttpStatus.BAD_REQUEST;
+        }
         if (normalized.contains("not found")) {
             return HttpStatus.NOT_FOUND;
-        }
-        if (normalized.contains("invalid password")) {
-            return HttpStatus.UNAUTHORIZED;
         }
         if (normalized.contains("already registered")) {
             return HttpStatus.CONFLICT;

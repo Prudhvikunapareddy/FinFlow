@@ -1,0 +1,57 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>User Access Control</h1>
+      <p>Manage FinFlow roles for every registered account inside the auth service.</p>
+    </div>
+  </div>
+
+  <section class="surface-panel table-shell">
+    @if (loading()) {
+      <div class="empty-state">Loading users...</div>
+    } @else if (users().length) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>#{{ user.id }}</td>
+              <td>{{ user.email }}</td>
+              <td>
+                <select
+                  class="field-select compact-select"
+                  [value]="selectedRole(user)"
+                  (change)="updateDraft(user.id, ($any($event.target)).value)"
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button
+                    type="button"
+                    class="button button-primary button-sm"
+                    [disabled]="!hasPendingChange(user) || savingUserId() !== null"
+                    (click)="save(user)"
+                  >
+                    {{ savingUserId() === user.id ? 'Saving...' : 'Save' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">No users returned from the auth service.</div>
+    }
+  </section>
+</section>

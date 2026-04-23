@@ -1,0 +1,107 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>Admin Review</h1>
+      <p>Inspect the application snapshot and execute the next valid workflow action.</p>
+    </div>
+
+    <a routerLink="/admin/applications" class="pill-link">Back to Applications</a>
+  </div>
+
+  @if (loading()) {
+    <section class="surface-panel">
+      <div class="empty-state">Loading application review data...</div>
+    </section>
+  } @else if (application(); as app) {
+    <div class="section-grid two-up">
+      <section class="surface-panel">
+        <div class="panel-header">
+          <h3>{{ app.name }}</h3>
+          <p>Reviewing application #{{ app.id }} for {{ app.applicantName }}</p>
+        </div>
+        <div class="panel-body section-stack">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Loan Name</span>
+              <strong>{{ app.name }}</strong>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Applicant</span>
+              <strong>{{ app.applicantName }}</strong>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Amount</span>
+              <strong>{{ (app.amount ?? 0) | currencyInr }}</strong>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Status</span>
+              <app-status-badge [status]="app.status" />
+            </div>
+          </div>
+
+          <div class="review-notes">
+            <span class="detail-label">Workflow Rules</span>
+            <p>
+              Documents can be verified only from <strong>Submitted</strong>. Approval is unlocked only after
+              <strong>Docs Verified</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="surface-panel">
+        <div class="panel-header">
+          <h3>Review Actions</h3>
+          <p>Only valid transitions are enabled. Final decisions lock the record.</p>
+        </div>
+        <div class="panel-body section-stack">
+          <button
+            type="button"
+            class="button button-warning review-button"
+            [disabled]="!canVerify() || processing() !== null"
+            (click)="verifyDocuments()"
+          >
+            {{ processing() === 'VERIFY' ? 'Verifying...' : 'Verify Document' }}
+          </button>
+
+          <button
+            type="button"
+            class="button button-primary review-button"
+            [disabled]="!canApprove() || processing() !== null"
+            (click)="openDecision('APPROVED')"
+          >
+            {{ processing() === 'APPROVED' ? 'Approving...' : 'Approve Application' }}
+          </button>
+
+          <button
+            type="button"
+            class="button button-danger review-button"
+            [disabled]="!canReject() || processing() !== null"
+            (click)="openDecision('REJECTED')"
+          >
+            {{ processing() === 'REJECTED' ? 'Rejecting...' : 'Reject Application' }}
+          </button>
+
+          <div class="review-state">
+            Current status:
+            <app-status-badge [status]="app.status" />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <app-confirm-dialog
+      [open]="pendingDecision() !== null"
+      [title]="decisionTitle()"
+      [message]="decisionMessage()"
+      [confirmLabel]="decisionLabel()"
+      [tone]="decisionTone()"
+      (cancelled)="closeDecision()"
+      (confirmed)="confirmDecision()"
+    />
+  } @else {
+    <section class="surface-panel">
+      <div class="empty-state">Application not found.</div>
+    </section>
+  }
+</section>

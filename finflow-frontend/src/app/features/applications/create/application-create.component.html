@@ -1,0 +1,43 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>Create Loan Application</h1>
+      <p>Start a new draft and continue editing it until you are ready to submit for review.</p>
+    </div>
+
+    <a routerLink="/applications" class="pill-link">Back to Applications</a>
+  </div>
+
+  <section class="surface-panel">
+    <div class="panel-body">
+      <form class="section-stack" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="field-grid">
+          <div class="field-group">
+            <label class="field-label" for="application-name">Loan Name</label>
+            <input id="application-name" class="field-control" type="text" formControlName="name" />
+            <div class="field-error">{{ hasError('name') ? getError('name') : '' }}</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="application-amount">Amount</label>
+            <input
+              id="application-amount"
+              class="field-control"
+              type="number"
+              formControlName="amount"
+              min="1000"
+              step="500"
+            />
+            <div class="field-error">{{ hasError('amount') ? getError('amount') : '' }}</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary" [disabled]="submitting()">
+            {{ submitting() ? 'Creating Draft...' : 'Create Draft' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+</section>

@@ -1,0 +1,25 @@
+.upload-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.upload-input {
+  padding-block: 10px;
+}
+
+.upload-meta {
+  min-height: 18px;
+}
+
+.upload-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.upload-success {
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 184, 148, 0.35);
+  border-radius: var(--radius-sm);
+  background: rgba(0, 184, 148, 0.1);
+  color: #8af3d8;
+}

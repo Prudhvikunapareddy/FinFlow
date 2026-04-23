@@ -1,0 +1,134 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>Application Detail</h1>
+      <p>Review the current state of your loan request and attach supporting documents.</p>
+    </div>
+
+    <a routerLink="/applications" class="pill-link">Back to Applications</a>
+  </div>
+
+  @if (loading()) {
+    <section class="surface-panel">
+      <div class="empty-state">Loading application...</div>
+    </section>
+  } @else if (application(); as app) {
+    <div class="section-grid two-up">
+      <div class="section-stack">
+        <section class="surface-panel">
+          <div class="panel-header">
+            <h3>{{ app.name }}</h3>
+            <p>Application #{{ app.id }} owned by {{ app.applicantName }}</p>
+          </div>
+          <div class="panel-body section-stack">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Loan Name</span>
+                <strong>{{ app.name }}</strong>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Amount</span>
+                <strong>{{ app.amount | currencyInr }}</strong>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Applicant</span>
+                <strong>{{ app.applicantName }}</strong>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Status</span>
+                <app-status-badge [status]="app.status" />
+              </div>
+            </div>
+
+            @if (isDraft()) {
+              <form class="section-stack editor-form" [formGroup]="form" (ngSubmit)="saveChanges()">
+                <div class="field-grid">
+                  <div class="field-group">
+                    <label class="field-label" for="detail-name">Loan Name</label>
+                    <input id="detail-name" class="field-control" type="text" formControlName="name" />
+                    <div class="field-error">{{ hasError('name') ? getError('name') : '' }}</div>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="detail-amount">Amount</label>
+                    <input
+                      id="detail-amount"
+                      class="field-control"
+                      type="number"
+                      formControlName="amount"
+                      min="1000"
+                      step="500"
+                    />
+                    <div class="field-error">{{ hasError('amount') ? getError('amount') : '' }}</div>
+                  </div>
+                </div>
+
+                <div class="detail-actions">
+                  <button type="submit" class="button button-primary" [disabled]="saving()">
+                    {{ saving() ? 'Saving...' : 'Save Changes' }}
+                  </button>
+                  <button type="button" class="button button-success" [disabled]="saving()" (click)="openAction('submit')">
+                    Submit for Review
+                  </button>
+                  <button type="button" class="button button-danger" [disabled]="saving()" (click)="openAction('delete')">
+                    Delete Draft
+                  </button>
+                </div>
+              </form>
+            } @else {
+              <div class="readonly-note">
+                This application is now read-only because it has moved beyond draft status.
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <div class="section-stack">
+        <section class="surface-panel">
+          <div class="panel-header">
+            <h3>Document Upload</h3>
+            <p>Upload PDFs or images that support this application.</p>
+          </div>
+          <div class="panel-body">
+            <app-documents-upload [applicationId]="app.id" (uploaded)="onUpload($event)" />
+
+            @if (lastUploadedFile()) {
+              <p class="upload-note">Latest confirmed file: {{ lastUploadedFile() }}</p>
+            }
+          </div>
+        </section>
+
+        <section class="surface-panel">
+          <div class="panel-header">
+            <h3>Workflow Snapshot</h3>
+            <p>Your current stage inside the FinFlow lifecycle.</p>
+          </div>
+          <div class="panel-body">
+            <div class="timeline-line">
+              <span class="timeline-step" [class.is-active]="status() === 'DRAFT'">Draft</span>
+              <span class="timeline-step" [class.is-active]="status() === 'SUBMITTED'">Submitted</span>
+              <span class="timeline-step" [class.is-active]="status() === 'DOCS_VERIFIED'">Docs Verified</span>
+              <span class="timeline-step" [class.is-active]="status() === 'APPROVED'">Approved</span>
+              <span class="timeline-step" [class.is-active]="status() === 'REJECTED'">Rejected</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <app-confirm-dialog
+      [open]="pendingAction() !== null"
+      [title]="actionTitle()"
+      [message]="actionMessage()"
+      [confirmLabel]="actionLabel()"
+      [tone]="actionTone()"
+      (cancelled)="closeAction()"
+      (confirmed)="confirmAction()"
+    />
+  } @else {
+    <section class="surface-panel">
+      <div class="empty-state">Application not found.</div>
+    </section>
+  }
+</section>

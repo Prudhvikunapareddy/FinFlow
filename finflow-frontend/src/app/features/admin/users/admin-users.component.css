@@ -1,0 +1,8 @@
+.compact-select {
+  min-width: 130px;
+}
+
+.button-sm {
+  min-height: 34px;
+  padding-inline: 14px;
+}

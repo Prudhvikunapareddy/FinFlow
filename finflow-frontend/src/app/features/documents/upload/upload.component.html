@@ -1,0 +1,48 @@
+<div class="upload-stack">
+  <div class="field-group">
+    <label class="field-label" for="document-application-id">Application ID</label>
+    <input
+      id="document-application-id"
+      class="field-control"
+      type="number"
+      [value]="applicationId()"
+      readonly
+    />
+  </div>
+
+  <div class="field-group">
+    <label class="field-label" for="document-file">Supporting Document</label>
+    <input
+      #fileInput
+      id="document-file"
+      class="field-control upload-input"
+      type="file"
+      accept=".pdf,.jpg,.jpeg,.png"
+      (change)="onFileSelected($event)"
+    />
+    <div class="upload-meta">
+      @if (selectedFileName()) {
+        <span class="inline-muted">Selected: {{ selectedFileName() }}</span>
+      } @else {
+        <span class="inline-muted">Accepted formats: PDF, JPG, PNG</span>
+      }
+    </div>
+  </div>
+
+  <div class="upload-actions">
+    <button
+      type="button"
+      class="button button-primary"
+      [disabled]="uploading() || !selectedFileName()"
+      (click)="upload(fileInput)"
+    >
+      {{ uploading() ? 'Uploading...' : 'Upload Document' }}
+    </button>
+  </div>
+
+  @if (uploadedDocument(); as document) {
+    <div class="upload-success">
+      Latest upload confirmed: <strong>{{ document.fileName }}</strong>
+    </div>
+  }
+</div>

@@ -1,6 +1,7 @@
 package com.finflow.application_service.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +31,12 @@ public class ApplicationService {
         String applicantEmail = requireEmail(email);
 
         LoanApplication app = modelMapper.map(dto, LoanApplication.class);
-
+        app.setName(normalizeName(dto.getName()));
         app.setApplicantName(applicantEmail);
         app.setStatus("DRAFT");
 
         LoanApplication saved = repository.save(app);
+        publishApplicationSnapshot(saved);
 
         return modelMapper.map(saved, ApplicationResponseDTO.class);
     }
@@ -55,17 +57,23 @@ public class ApplicationService {
         LoanApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
+        ensureDraft(app, "Only draft applications can be updated");
+        app.setName(normalizeName(dto.getName()));
         app.setAmount(dto.getAmount());
 
         LoanApplication updated = repository.save(app);
+        publishApplicationSnapshot(updated);
 
         return modelMapper.map(updated, ApplicationResponseDTO.class);
     }
 
     public ApplicationResponseDTO updateForUser(Long id, ApplicationRequestDTO dto, String email) {
         LoanApplication app = getOwnedApplication(id, email);
+        ensureDraft(app, "Only draft applications can be updated");
+        app.setName(normalizeName(dto.getName()));
         app.setAmount(dto.getAmount());
         LoanApplication updated = repository.save(app);
+        publishApplicationSnapshot(updated);
         return modelMapper.map(updated, ApplicationResponseDTO.class);
     }
 
@@ -74,12 +82,16 @@ public class ApplicationService {
         LoanApplication app = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
 
+        ensureDraft(app, "Only draft applications can be deleted");
         repository.delete(app);
+        publishApplicationDeletion(id);
     }
 
     public void deleteForUser(Long id, String email) {
         LoanApplication app = getOwnedApplication(id, email);
+        ensureDraft(app, "Only draft applications can be deleted");
         repository.delete(app);
+        publishApplicationDeletion(id);
     }
 
     public List<ApplicationResponseDTO> getAll() {
@@ -101,16 +113,10 @@ public class ApplicationService {
         if (!app.getApplicantName().equals(applicantEmail)) {
             throw new RuntimeException("Unauthorized");
         }
+        ensureDraft(app, "Only draft applications can be submitted");
         app.setStatus("SUBMITTED");
         LoanApplication updated = repository.save(app);
-
-        // Send to Admin Service queue
-        ApplicationMessageDTO message = ApplicationMessageDTO.builder()
-                .id(updated.getId())
-                .name(updated.getApplicantName())
-                .status(updated.getStatus())
-                .build();
-        rabbitTemplate.convertAndSend(RabbitConfig.QUEUE, message);
+        publishApplicationSnapshot(updated);
 
         return modelMapper.map(updated, ApplicationResponseDTO.class);
     }
@@ -141,7 +147,7 @@ public class ApplicationService {
         if (email == null || email.isBlank()) {
             throw new RuntimeException("Authenticated user email is required");
         }
-        return email;
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     private LoanApplication getOwnedApplication(Long id, String email) {
@@ -154,5 +160,40 @@ public class ApplicationService {
         }
 
         return app;
+    }
+
+    private String normalizeName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new RuntimeException("Loan name is required");
+        }
+        return name.trim();
+    }
+
+    private void ensureDraft(LoanApplication app, String message) {
+        if (!"DRAFT".equalsIgnoreCase(app.getStatus())) {
+            throw new RuntimeException(message);
+        }
+    }
+
+    private void publishApplicationSnapshot(LoanApplication app) {
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.QUEUE,
+                ApplicationMessageDTO.builder()
+                        .id(app.getId())
+                        .name(app.getName())
+                        .applicantName(app.getApplicantName())
+                        .amount(app.getAmount())
+                        .status(app.getStatus())
+                        .action("UPSERT")
+                        .build());
+    }
+
+    private void publishApplicationDeletion(Long id) {
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.QUEUE,
+                ApplicationMessageDTO.builder()
+                        .id(id)
+                        .action("DELETE")
+                        .build());
     }
 }

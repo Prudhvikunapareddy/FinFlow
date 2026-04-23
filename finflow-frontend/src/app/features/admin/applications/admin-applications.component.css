@@ -1,0 +1,10 @@
+.filter-bar {
+  display: grid;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.button-sm {
+  min-height: 34px;
+  padding-inline: 14px;
+}

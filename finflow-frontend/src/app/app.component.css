@@ -1,0 +1,12 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-stage {
+  min-height: 100vh;
+}
+
+.app-stage.with-navbar {
+  padding-top: var(--navbar-height);
+}

@@ -1,0 +1,37 @@
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--overlay);
+  backdrop-filter: blur(6px);
+}
+
+.dialog-panel {
+  width: min(440px, 100%);
+  padding: 24px;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(22, 33, 62, 0.98), rgba(10, 18, 37, 0.98));
+  box-shadow: var(--shadow-lg);
+}
+
+.dialog-panel h3 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.dialog-panel p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}

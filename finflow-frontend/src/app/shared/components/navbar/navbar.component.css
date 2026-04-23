@@ -1,0 +1,113 @@
+.navbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
+  height: var(--navbar-height);
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 15, 30, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.navbar__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.navbar__mark {
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #ff7d8d);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(233, 69, 96, 0.25);
+}
+
+.navbar__nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.navbar__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-weight: 600;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.navbar__link:hover,
+.navbar__link.is-active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar__user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navbar__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.navbar__role {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.navbar__email {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.navbar__logout {
+  min-width: 92px;
+}
+
+@media (max-width: 960px) {
+  .navbar {
+    grid-template-columns: 1fr;
+    height: auto;
+    padding: 12px 16px;
+  }
+
+  .navbar__brand,
+  .navbar__nav,
+  .navbar__user {
+    justify-content: center;
+  }
+
+  .navbar__user {
+    flex-direction: column;
+  }
+
+  .navbar__identity {
+    align-items: center;
+  }
+}

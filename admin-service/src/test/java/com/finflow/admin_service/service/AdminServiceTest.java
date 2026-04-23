@@ -19,11 +19,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import com.finflow.admin_service.config.RabbitConfig;
 import com.finflow.admin_service.dto.ApplicationStatusUpdateDTO;
+import com.finflow.admin_service.dto.UserResponseDTO;
 import com.finflow.admin_service.entity.Application;
 import com.finflow.admin_service.repository.ApplicationRepository;
 
@@ -45,6 +50,7 @@ class AdminServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(adminService, "documentServiceUrl", "http://DOCUMENT-SERVICE");
+        ReflectionTestUtils.setField(adminService, "authServiceUrl", "http://AUTH-SERVICE");
     }
 
     @Test
@@ -156,19 +162,38 @@ class AdminServiceTest {
     }
 
     @Test
-    void getUsersShouldReturnDistinctApplicantNames() {
-        when(repository.findDistinctApplicantNames()).thenReturn(List.of("a@finflow.com", "b@finflow.com"));
+    void getUsersShouldReturnUsersFromAuthService() {
+        List<UserResponseDTO> users = List.of(
+                new UserResponseDTO(1L, "a@finflow.com", "USER"),
+                new UserResponseDTO(2L, "b@finflow.com", "ADMIN"));
 
-        assertEquals(List.of("a@finflow.com", "b@finflow.com"), adminService.getUsers());
+        when(restTemplate.exchange(
+                org.mockito.ArgumentMatchers.eq("http://AUTH-SERVICE/internal/users"),
+                org.mockito.ArgumentMatchers.eq(HttpMethod.GET),
+                org.mockito.ArgumentMatchers.isNull(),
+                org.mockito.ArgumentMatchers.<ParameterizedTypeReference<List<UserResponseDTO>>>any()))
+                .thenReturn(ResponseEntity.ok(users));
+
+        assertEquals(users, adminService.getUsers());
     }
 
     @Test
-    void updateUserShouldNormalizeRoleInMessage() {
-        String result = adminService.updateUser(3L, " admin ");
+    void updateUserShouldNormalizeRoleAndReturnUpdatedUser() {
+        UserResponseDTO updatedUser = new UserResponseDTO(3L, "manager@finflow.com", "ADMIN");
 
-        assertEquals(
-                "User management is handled by auth-service. No local user record exists for id 3; requested role was: ADMIN",
-                result);
+        when(restTemplate.exchange(
+                org.mockito.ArgumentMatchers.eq("http://AUTH-SERVICE/internal/users/{id}/role"),
+                org.mockito.ArgumentMatchers.eq(HttpMethod.PUT),
+                org.mockito.ArgumentMatchers.<HttpEntity<UserResponseDTO>>any(),
+                org.mockito.ArgumentMatchers.eq(UserResponseDTO.class),
+                org.mockito.ArgumentMatchers.eq(3L)))
+                .thenReturn(ResponseEntity.ok(updatedUser));
+
+        UserResponseDTO result = adminService.updateUser(3L, " admin ");
+
+        assertEquals(3L, result.getId());
+        assertEquals("manager@finflow.com", result.getEmail());
+        assertEquals("ADMIN", result.getRole());
     }
 
     @Test

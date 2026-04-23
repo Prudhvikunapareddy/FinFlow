@@ -1,0 +1,54 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>My Applications</h1>
+      <p>Monitor every draft, submission, and final decision tied to your account.</p>
+    </div>
+
+    <a routerLink="/applications/new" class="button button-primary">New Application</a>
+  </div>
+
+  <section class="surface-panel table-shell">
+    @if (loading()) {
+      <div class="empty-state">Loading applications...</div>
+    } @else if (applications().length) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (application of applications(); track application.id) {
+            <tr>
+              <td>#{{ application.id }}</td>
+              <td>{{ application.name }}</td>
+              <td>{{ application.amount | currencyInr }}</td>
+              <td>
+                <app-status-badge [status]="application.status" />
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a class="button button-secondary button-sm" [routerLink]="['/applications', application.id]">
+                    {{ application.status === 'DRAFT' ? 'Continue' : 'View' }}
+                  </a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        No applications found.
+        <div class="list-empty-action">
+          <a routerLink="/applications/new" class="button button-primary">Create draft</a>
+        </div>
+      </div>
+    }
+  </section>
+</section>

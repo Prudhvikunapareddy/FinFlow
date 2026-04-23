@@ -22,12 +22,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
 
                 //  allow auth APIs
-                .requestMatchers("/auth/signup", "/auth/login").permitAll()
+                .requestMatchers("/auth/signup", "/auth/login", "/internal/**").permitAll()
 
                 //  allow swagger
                 .requestMatchers(
                         "/auth/signup",
                         "/auth/login",
+                        "/internal/**",
 
                         // Swagger 
                         "/v3/api-docs/**",

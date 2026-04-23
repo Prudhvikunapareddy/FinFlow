@@ -16,6 +16,18 @@ public class ApplicationListener {
 
     @RabbitListener(queues = RabbitConfig.QUEUE)
     public void receive(ApplicationMessageDTO message) {
-        repository.upsertApplication(message.getId(), message.getName(), message.getStatus());
+        if ("DELETE".equalsIgnoreCase(message.getAction())) {
+            if (repository.existsById(message.getId())) {
+                repository.deleteById(message.getId());
+            }
+            return;
+        }
+
+        repository.upsertApplication(
+                message.getId(),
+                message.getName(),
+                message.getApplicantName(),
+                message.getAmount(),
+                message.getStatus());
     }
 }

@@ -1,0 +1,81 @@
+<section class="page-shell section-stack">
+  <div class="page-header">
+    <div>
+      <h1>Loan Operations Dashboard</h1>
+      <p>Signed in as {{ email() }}. Review your latest drafts and decisions from one place.</p>
+    </div>
+
+    <a routerLink="/applications/new" class="button button-primary">Apply for Loan</a>
+  </div>
+
+  <div class="stats-grid">
+    <article class="stat-card">
+      <div class="stat-label">Total Applications</div>
+      <div class="stat-value">{{ summary().total }}</div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-label">Pending Review</div>
+      <div class="stat-value">{{ summary().pending }}</div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-label">Approved</div>
+      <div class="stat-value">{{ summary().approved }}</div>
+    </article>
+
+    <article class="stat-card">
+      <div class="stat-label">Rejected</div>
+      <div class="stat-value">{{ summary().rejected }}</div>
+    </article>
+  </div>
+
+  <section class="surface-panel table-shell">
+    <div class="panel-header">
+      <h3>Recent Applications</h3>
+      <p>The latest five items from your FinFlow queue.</p>
+    </div>
+
+    @if (loading()) {
+      <div class="empty-state">Loading your applications...</div>
+    } @else if (recentApplications().length) {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (application of recentApplications(); track application.id) {
+            <tr>
+              <td>#{{ application.id }}</td>
+              <td>{{ application.name }}</td>
+              <td>{{ application.amount | currencyInr }}</td>
+              <td>
+                <app-status-badge [status]="application.status" />
+              </td>
+              <td>
+                <div class="table-actions">
+                  <a class="button button-secondary button-sm" [routerLink]="['/applications', application.id]">
+                    Open
+                  </a>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <div class="empty-state">
+        You have not created any applications yet.
+        <div class="dashboard-empty-action">
+          <a routerLink="/applications/new" class="button button-primary">Create your first draft</a>
+        </div>
+      </div>
+    }
+  </section>
+</section>

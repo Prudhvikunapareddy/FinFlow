@@ -7,11 +7,16 @@ import java.util.Locale;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.finflow.admin_service.config.RabbitConfig;
 import com.finflow.admin_service.dto.ApplicationStatusUpdateDTO;
+import com.finflow.admin_service.dto.UserResponseDTO;
 import com.finflow.admin_service.entity.Application;
 import com.finflow.admin_service.repository.ApplicationRepository;
 
@@ -29,6 +34,9 @@ public class AdminService {
 
     @Value("${document.service.url:http://DOCUMENT-SERVICE}")
     private String documentServiceUrl;
+
+    @Value("${auth.service.url:http://AUTH-SERVICE}")
+    private String authServiceUrl;
 
     // Get all applications
     public List<Application> getAll() {
@@ -82,16 +90,38 @@ public class AdminService {
                 + ", Docs Verified: " + docsVerified;
     }
 
-    public List<String> getUsers() {
-        return repository.findDistinctApplicantNames();
+    public List<UserResponseDTO> getUsers() {
+        ResponseEntity<List<UserResponseDTO>> response = restTemplate.exchange(
+                authServiceUrl + "/internal/users",
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<>() {
+                });
+
+        List<UserResponseDTO> users = response.getBody();
+        return users == null ? List.of() : users;
     }
 
-    public String updateUser(Long id, String role) {
+    public UserResponseDTO updateUser(Long id, String role) {
         if (role == null || role.isBlank()) {
             throw new RuntimeException("Role is required");
         }
-        return "User management is handled by auth-service. No local user record exists for id " + id
-                + "; requested role was: " + role.trim().toUpperCase(Locale.ROOT);
+
+        UserResponseDTO payload = new UserResponseDTO();
+        payload.setRole(role.trim().toUpperCase(Locale.ROOT));
+
+        UserResponseDTO updatedUser = restTemplate.exchange(
+                authServiceUrl + "/internal/users/{id}/role",
+                HttpMethod.PUT,
+                new HttpEntity<>(payload),
+                UserResponseDTO.class,
+                id).getBody();
+
+        if (updatedUser == null) {
+            throw new RuntimeException("User update failed");
+        }
+
+        return updatedUser;
     }
 
     private String normalizeStatus(String status) {
@@ -107,8 +137,18 @@ public class AdminService {
     }
 
     private void validateDecision(Application app, String normalizedStatus) {
+        if ("APPROVED".equals(app.getStatus()) || "REJECTED".equals(app.getStatus())) {
+            throw new RuntimeException("A final decision has already been made");
+        }
+
         if ("APPROVED".equals(normalizedStatus) && !"DOCS_VERIFIED".equals(app.getStatus())) {
             throw new RuntimeException("Application can be approved only after documents are verified");
+        }
+
+        if ("REJECTED".equals(normalizedStatus)
+                && !"SUBMITTED".equals(app.getStatus())
+                && !"DOCS_VERIFIED".equals(app.getStatus())) {
+            throw new RuntimeException("Only submitted applications can be rejected");
         }
 
         if ("DOCS_VERIFIED".equals(normalizedStatus)) {

@@ -214,5 +214,17 @@ services:
     ports:
       - "9083:8083"
 
+  finflow-frontend:
+    build:
+      context: ./finflow-frontend
+    container_name: finflow-frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+    environment:
+      FINFLOW_API_BASE_URL: http://localhost:9083
+    ports:
+      - "4200:80"
+
 volumes:
   postgres-data:
