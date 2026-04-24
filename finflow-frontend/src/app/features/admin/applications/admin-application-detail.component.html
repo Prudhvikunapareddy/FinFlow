@@ -51,14 +51,38 @@
 
       <section class="surface-panel">
         <div class="panel-header">
-          <h3>Review Actions</h3>
-          <p>Only valid transitions are enabled. Final decisions lock the record.</p>
+          <h3>Uploaded Documents</h3>
+          <p>Open the applicant files before verifying the document stage.</p>
         </div>
         <div class="panel-body section-stack">
+          @if (documentsLoading()) {
+            <div class="empty-state compact">Loading uploaded documents...</div>
+          } @else if (documents().length) {
+            <div class="document-list">
+              @for (document of documents(); track document.id) {
+                <div class="document-row">
+                  <div class="document-meta">
+                    <strong>{{ document.fileName }}</strong>
+                    <span>{{ document.fileType || 'Uploaded file' }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="button button-secondary document-action"
+                    (click)="viewDocument(document)"
+                  >
+                    View
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state compact">No documents uploaded for this application.</div>
+          }
+
           <button
             type="button"
             class="button button-warning review-button"
-            [disabled]="!canVerify() || processing() !== null"
+            [disabled]="!canVerify() || processing() !== null || !documents().length"
             (click)="verifyDocuments()"
           >
             {{ processing() === 'VERIFY' ? 'Verifying...' : 'Verify Document' }}

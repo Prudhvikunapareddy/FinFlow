@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -122,5 +123,16 @@ class DocumentServiceTest {
                 () -> documentService.get(2L, "other@finflow.com", "USER"));
 
         assertEquals("Unauthorized", exception.getMessage());
+    }
+
+    @Test
+    void getByApplicationShouldReturnDocumentMetadataForAdmin() {
+        DocumentResponseDTO response = new DocumentResponseDTO(8L, "salary-slip.pdf", "application/pdf", 42L);
+        when(repository.findMetadataByApplicationId(42L)).thenReturn(List.of(response));
+
+        List<DocumentResponseDTO> result = documentService.getByApplication(42L, null, "ADMIN");
+
+        assertEquals(1, result.size());
+        assertEquals("salary-slip.pdf", result.get(0).getFileName());
     }
 }

@@ -25,6 +25,10 @@ export class DocumentService {
     });
   }
 
+  getByApplication(applicationId: number): Observable<DocumentResponse[]> {
+    return this.http.get<DocumentResponse[]>(`${this.documentsUrl}/applications/${applicationId}`);
+  }
+
   hasDocuments(applicationId: number): Observable<boolean> {
     return this.http.get<boolean>(`${this.documentsUrl}/applications/${applicationId}/exists`);
   }

@@ -3,7 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, map, switchMap } from 'rxjs';
 import { AdminApplicationResponse } from '../../../core/models/application.model';
+import { DocumentResponse } from '../../../core/models/document.model';
 import { AdminService } from '../../../core/services/admin.service';
+import { DocumentService } from '../../../core/services/document.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -20,13 +22,16 @@ import { CurrencyInrPipe } from '../../../shared/pipes/currency-inr.pipe';
 export class AdminApplicationDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly adminService = inject(AdminService);
+  private readonly documentService = inject(DocumentService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly loading = signal(true);
+  protected readonly documentsLoading = signal(false);
   protected readonly processing = signal<'VERIFY' | 'APPROVED' | 'REJECTED' | null>(null);
   protected readonly pendingDecision = signal<'APPROVED' | 'REJECTED' | null>(null);
   protected readonly application = signal<AdminApplicationResponse | null>(null);
+  protected readonly documents = signal<DocumentResponse[]>([]);
 
   protected readonly canVerify = computed(() => this.application()?.status === 'SUBMITTED');
   protected readonly canApprove = computed(() => this.application()?.status === 'DOCS_VERIFIED');
@@ -48,8 +53,33 @@ export class AdminApplicationDetailComponent {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
-        next: (application) => this.application.set(application),
-        error: () => this.application.set(null),
+        next: (application) => {
+          this.application.set(application);
+          this.loadDocuments(application.id);
+        },
+        error: () => {
+          this.application.set(null);
+          this.documents.set([]);
+        },
+      });
+  }
+
+  protected viewDocument(document: DocumentResponse): void {
+    this.documentService
+      .download(document.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          const blob = response.body;
+          if (!blob) {
+            this.toastService.error('Document content is empty.');
+            return;
+          }
+
+          const objectUrl = URL.createObjectURL(blob);
+          window.open(objectUrl, '_blank', 'noopener');
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        },
       });
   }
 
@@ -122,5 +152,24 @@ export class AdminApplicationDetailComponent {
 
   protected decisionTone(): 'default' | 'danger' {
     return this.pendingDecision() === 'APPROVED' ? 'default' : 'danger';
+  }
+
+  private loadDocuments(applicationId: number): void {
+    this.documentsLoading.set(true);
+    this.documents.set([]);
+
+    this.documentService
+      .getByApplication(applicationId)
+      .pipe(
+        finalize(() => this.documentsLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (documents) => this.documents.set(documents),
+        error: () => {
+          this.documents.set([]);
+          this.toastService.error('Unable to load uploaded documents for this application.');
+        },
+      });
   }
 }

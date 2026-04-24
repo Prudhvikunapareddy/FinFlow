@@ -2,6 +2,8 @@ package com.finflow.document_service.controller;
 
 
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -67,6 +69,16 @@ public class DocumentController {
     @GetMapping("/internal/applications/{applicationId}/exists")
     public boolean hasDocumentsInternal(@PathVariable Long applicationId) {
         return service.hasDocuments(applicationId);
+    }
+
+    @GetMapping("/applications/{applicationId}")
+    public List<DocumentResponseDTO> getByApplication(
+            @PathVariable Long applicationId,
+            @Parameter(hidden = true)
+            @RequestHeader(value = "X-User-Email", required = false) String email,
+            @Parameter(hidden = true)
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        return service.getByApplication(applicationId, email, role);
     }
 
     @GetMapping("/test")

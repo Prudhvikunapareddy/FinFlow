@@ -1,5 +1,7 @@
 package com.finflow.document_service.service;
 
+import java.util.List;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +51,11 @@ public class DocumentService {
 
     public boolean hasDocuments(Long applicationId) {
         return repository.existsByApplicationId(applicationId);
+    }
+
+    public List<DocumentResponseDTO> getByApplication(Long applicationId, String email, String role) {
+        validateApplicationAccess(applicationId, email, role);
+        return repository.findMetadataByApplicationId(applicationId);
     }
 
     private void validateApplicationAccess(Long applicationId, String email, String role) {

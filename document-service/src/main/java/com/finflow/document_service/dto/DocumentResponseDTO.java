@@ -9,6 +9,13 @@ public class DocumentResponseDTO {
     public DocumentResponseDTO() {
     }
 
+    public DocumentResponseDTO(Long id, String fileName, String fileType, Long applicationId) {
+        this.id = id;
+        this.fileName = fileName;
+        this.fileType = fileType;
+        this.applicationId = applicationId;
+    }
+
     public Long getId() {
         return id;
     }
