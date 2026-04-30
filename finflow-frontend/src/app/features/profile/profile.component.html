@@ -1,0 +1,68 @@
+<main class="page-wrapper container profile-page">
+  <header class="profile-header">
+    <div>
+      <p class="eyebrow">Account</p>
+      <h1>My Profile</h1>
+      <span>Manage your FinFlow account details and password.</span>
+    </div>
+    <button type="button" class="btn-primary" (click)="editing.set(!editing())">
+      {{ editing() ? 'Cancel edit' : 'Edit profile' }}
+    </button>
+  </header>
+
+  @if (loading()) {
+    <app-loader />
+  } @else {
+    <section class="profile-grid">
+      <form class="glass-card profile-card" [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+        <h2>Personal details</h2>
+        <div class="field-grid">
+          <label>
+            <span>First name</span>
+            <input formControlName="firstName" [readonly]="!editing()">
+          </label>
+          <label>
+            <span>Last name</span>
+            <input formControlName="lastName" [readonly]="!editing()">
+          </label>
+          <label>
+            <span>Email</span>
+            <input formControlName="email">
+          </label>
+          <label>
+            <span>Phone</span>
+            <input formControlName="phoneNumber" [readonly]="!editing()" maxlength="10">
+          </label>
+          <label>
+            <span>Date of birth</span>
+            <input type="date" formControlName="dateOfBirth" [readonly]="!editing()">
+          </label>
+          <label>
+            <span>Account created</span>
+            <input [value]="profileForm.getRawValue().createdAt ? (profileForm.getRawValue().createdAt | date:'d MMM y') : 'Not available'" readonly>
+          </label>
+        </div>
+        @if (editing()) {
+          <button type="submit" class="btn-primary save-button" [disabled]="saving()">
+            {{ saving() ? 'Saving...' : 'Save profile' }}
+          </button>
+        }
+      </form>
+
+      <form class="glass-card profile-card" [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+        <h2>Change password</h2>
+        <label>
+          <span>Current password</span>
+          <input type="password" formControlName="currentPassword" autocomplete="current-password">
+        </label>
+        <label>
+          <span>New password</span>
+          <input type="password" formControlName="newPassword" autocomplete="new-password">
+        </label>
+        <button type="submit" class="btn-primary save-button" [disabled]="changingPassword()">
+          {{ changingPassword() ? 'Updating...' : 'Change password' }}
+        </button>
+      </form>
+    </section>
+  }
+</main>

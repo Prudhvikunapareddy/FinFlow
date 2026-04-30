@@ -15,12 +15,14 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     @Modifying
     @Transactional
     @Query(value = """
-            insert into application (id, name, applicant_name, amount, status)
-            values (:id, :name, :applicantName, :amount, :status)
+            insert into application (id, name, applicant_name, amount, loan_type, tenure_months, status)
+            values (:id, :name, :applicantName, :amount, :loanType, :tenureMonths, :status)
             on conflict (id) do update
             set name = excluded.name,
                 applicant_name = excluded.applicant_name,
                 amount = excluded.amount,
+                loan_type = excluded.loan_type,
+                tenure_months = excluded.tenure_months,
                 status = excluded.status
             """, nativeQuery = true)
     void upsertApplication(
@@ -28,6 +30,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             @Param("name") String name,
             @Param("applicantName") String applicantName,
             @Param("amount") Double amount,
+            @Param("loanType") String loanType,
+            @Param("tenureMonths") Integer tenureMonths,
             @Param("status") String status);
 
     long countByStatus(String status);

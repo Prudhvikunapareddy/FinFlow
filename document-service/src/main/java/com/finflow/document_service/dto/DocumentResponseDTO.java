@@ -4,6 +4,7 @@ public class DocumentResponseDTO {
     private Long id;
     private String fileName;
     private String fileType;
+    private String documentType;
     private Long applicationId;
 
     public DocumentResponseDTO() {
@@ -13,6 +14,14 @@ public class DocumentResponseDTO {
         this.id = id;
         this.fileName = fileName;
         this.fileType = fileType;
+        this.applicationId = applicationId;
+    }
+
+    public DocumentResponseDTO(Long id, String fileName, String fileType, String documentType, Long applicationId) {
+        this.id = id;
+        this.fileName = fileName;
+        this.fileType = fileType;
+        this.documentType = documentType;
         this.applicationId = applicationId;
     }
 
@@ -38,6 +47,14 @@ public class DocumentResponseDTO {
 
     public void setFileType(String fileType) {
         this.fileType = fileType;
+    }
+
+    public String getDocumentType() {
+        return documentType;
+    }
+
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
     }
 
     public Long getApplicationId() {

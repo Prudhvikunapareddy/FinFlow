@@ -1,10 +1,128 @@
-.filter-bar {
-  display: grid;
-  gap: 8px;
-  min-width: 220px;
+.admin-page {
+  animation: pageIn 0.3s ease both;
 }
 
-.button-sm {
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.list-container {
+  overflow: hidden;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(6, minmax(120px, auto));
+  gap: 14px;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.filter-bar input,
+.filter-bar select {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(148,163,184,0.14);
+  background: #101827;
+  color: var(--text-1);
+  padding: 0 12px;
+}
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-2);
+  font-weight: 800;
+}
+
+.search-input {
+  position: relative;
+}
+
+.search-input svg {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-3);
+}
+
+.search-input input {
+  padding: 0 16px 0 46px;
+}
+
+.status-filter select {
+  padding: 0 14px;
+}
+
+.date-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.date-pills span {
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.date-pills .active {
+  color: white;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+
+td small {
+  display: block;
+  color: var(--text-2);
+  margin-top: 4px;
+}
+
+.decision-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.approve-btn,
+.reject-btn {
   min-height: 34px;
-  padding-inline: 14px;
+  border: 1px solid;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.approve-btn {
+  color: #34d399;
+  border-color: rgba(16,185,129,0.3);
+}
+
+.reject-btn {
+  color: #f87171;
+  border-color: rgba(239,68,68,0.3);
+}
+
+@media (max-width: 1024px) {
+  .stats-grid,
+  .filter-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-grid,
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
 }

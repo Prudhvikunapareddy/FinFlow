@@ -40,6 +40,10 @@ class AuthControllerValidationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "firstName": "Asha",
+                                  "lastName": "Sharma",
+                                  "dateOfBirth": "1998-04-29",
+                                  "phoneNumber": "9876543210",
                                   "email": "not-an-email",
                                   "password": "secret"
                                 }

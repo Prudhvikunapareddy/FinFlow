@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DocumentResponse } from '../models/document.model';
+import { DocumentResponse, DocumentType } from '../models/document.model';
 import { API_BASE_URL } from '../tokens/api-base-url.token';
 
 @Injectable({ providedIn: 'root' })
@@ -10,10 +10,11 @@ export class DocumentService {
   private readonly apiBaseUrl = inject(API_BASE_URL);
   private readonly documentsUrl = `${this.apiBaseUrl}/documents`;
 
-  upload(file: File, applicationId: number): Observable<DocumentResponse> {
+  upload(file: File, applicationId: number, documentType: DocumentType): Observable<DocumentResponse> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('applicationId', String(applicationId));
+    formData.append('documentType', documentType);
 
     return this.http.post<DocumentResponse>(`${this.documentsUrl}/upload`, formData);
   }

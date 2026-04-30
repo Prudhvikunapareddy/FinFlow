@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.finflow.admin_service.dto.DecisionRequestDTO;
+import com.finflow.admin_service.dto.AdminNotesRequestDTO;
+import com.finflow.admin_service.dto.BulkDecisionRequestDTO;
 import com.finflow.admin_service.dto.UserResponseDTO;
 import com.finflow.admin_service.dto.UserUpdateDTO;
 import com.finflow.admin_service.entity.Application;
@@ -46,6 +48,16 @@ public class AdminController {
     public Application decision(@PathVariable Long id, @Valid @RequestBody DecisionRequestDTO payload) {
         String status = payload.getStatus();
         return service.decision(id, status);
+    }
+
+    @PostMapping("/applications/bulk-decision")
+    public List<Application> bulkDecision(@Valid @RequestBody BulkDecisionRequestDTO payload) {
+        return service.bulkDecision(payload.getIds(), payload.getStatus());
+    }
+
+    @PutMapping("/applications/{id}/notes")
+    public Application updateNotes(@PathVariable Long id, @RequestBody AdminNotesRequestDTO payload) {
+        return service.updateNotes(id, payload.getNotes());
     }
 
     @PutMapping("/documents/{id}/verify")

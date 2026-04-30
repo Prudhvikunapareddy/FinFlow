@@ -14,6 +14,9 @@ public class Application implements Persistable<Long> {
     private String name;
     private String applicantName;
     private Double amount;
+    private String loanType;
+    private Integer tenureMonths;
+    private String adminNotes;
     private String status;
 
     @Transient
@@ -61,6 +64,30 @@ public class Application implements Persistable<Long> {
 
     public void setAmount(Double amount) {
         this.amount = amount;
+    }
+
+    public String getLoanType() {
+        return loanType;
+    }
+
+    public void setLoanType(String loanType) {
+        this.loanType = loanType;
+    }
+
+    public Integer getTenureMonths() {
+        return tenureMonths;
+    }
+
+    public void setTenureMonths(Integer tenureMonths) {
+        this.tenureMonths = tenureMonths;
+    }
+
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
     }
 
     public String getStatus() {

@@ -1,117 +1,144 @@
-<section class="page-shell section-stack">
-  <div class="page-header">
-    <div>
-      <h1>Admin Review</h1>
-      <p>Inspect the application snapshot and execute the next valid workflow action.</p>
+<div class="page-wrapper" style="padding: 0; max-width: none;">
+  @if (loading()) {
+    <div class="skeleton-container" style="padding: 2rem;">
+      <div class="skeleton-header" style="width: 300px;"></div>
+      <div class="skeleton-table" style="margin-top: 2rem;">
+        <div class="skeleton-row" style="height: 200px;"></div>
+        <div class="skeleton-row" style="height: 200px;"></div>
+      </div>
+    </div>
+  } @else if (application(); as app) {
+    <div class="admin-detail-header">
+      <div class="breadcrumb">
+        <a routerLink="/admin/applications">All Applications</a>
+        <span class="separator">/</span>
+        <span class="current">#{{ app.id }}</span>
+      </div>
+
+      <div class="header-main">
+        <div>
+          <h1 class="page-title">{{ applicantDisplayName() }}'s Application</h1>
+        </div>
+        <div class="header-actions">
+          <app-status-badge [status]="app.status" class="large-badge" />
+        </div>
+      </div>
     </div>
 
-    <a routerLink="/admin/applications" class="pill-link">Back to Applications</a>
-  </div>
-
-  @if (loading()) {
-    <section class="surface-panel">
-      <div class="empty-state">Loading application review data...</div>
-    </section>
-  } @else if (application(); as app) {
-    <div class="section-grid two-up">
-      <section class="surface-panel">
-        <div class="panel-header">
-          <h3>{{ app.name }}</h3>
-          <p>Reviewing application #{{ app.id }} for {{ app.applicantName }}</p>
-        </div>
-        <div class="panel-body section-stack">
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">Loan Name</span>
-              <strong>{{ app.name }}</strong>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Applicant</span>
-              <strong>{{ app.applicantName }}</strong>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Amount</span>
-              <strong>{{ (app.amount ?? 0) | currencyInr }}</strong>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Status</span>
-              <app-status-badge [status]="app.status" />
+    <div class="detail-content">
+      <div class="detail-layout">
+        <div class="main-column">
+          
+          <div class="glass-card section-card">
+            <h2 class="section-title">Application Details</h2>
+            
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">Application ID</span>
+                <span class="info-value mono text-muted">#{{ app.id }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Requested Amount</span>
+                <span class="info-value text-amount" [class]="app.status === 'APPROVED' ? 'text-green' : ''">
+                  {{ app.amount | currencyInr }}
+                </span>
+              </div>
+              <div class="info-item" style="grid-column: 1 / -1;">
+                <span class="info-label">Loan Purpose</span>
+                <span class="info-value">{{ app.name }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Loan Type</span>
+                <span class="info-value">{{ app.loanType || 'PERSONAL' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Tenure</span>
+                <span class="info-value">{{ app.tenureMonths || 12 }} months</span>
+              </div>
             </div>
           </div>
 
-          <div class="review-notes">
-            <span class="detail-label">Workflow Rules</span>
-            <p>
-              Documents can be verified only from <strong>Submitted</strong>. Approval is unlocked only after
-              <strong>Docs Verified</strong>.
-            </p>
-          </div>
-        </div>
-      </section>
+          <form class="glass-card section-card notes-card" [formGroup]="notesForm" (ngSubmit)="saveNotes()">
+            <h2 class="section-title">Admin Notes</h2>
+            <textarea formControlName="notes" rows="4" placeholder="Internal comments for the review team"></textarea>
+            <button type="submit" class="btn-primary">Save Notes</button>
+          </form>
 
-      <section class="surface-panel">
-        <div class="panel-header">
-          <h3>Uploaded Documents</h3>
-          <p>Open the applicant files before verifying the document stage.</p>
-        </div>
-        <div class="panel-body section-stack">
-          @if (documentsLoading()) {
-            <div class="empty-state compact">Loading uploaded documents...</div>
-          } @else if (documents().length) {
-            <div class="document-list">
-              @for (document of documents(); track document.id) {
-                <div class="document-row">
-                  <div class="document-meta">
-                    <strong>{{ document.fileName }}</strong>
-                    <span>{{ document.fileType || 'Uploaded file' }}</span>
+          <div class="glass-card section-card">
+            <h2 class="section-title">Review Actions</h2>
+            
+            <div class="admin-actions">
+              @if (app.status === 'SUBMITTED') {
+                <div class="action-prompt">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <div>
+                    <h4>Verify Documents First</h4>
+                    <p>You must review all attached documents before making a final decision on this application.</p>
                   </div>
-                  <button
-                    type="button"
-                    class="button button-secondary document-action"
-                    (click)="viewDocument(document)"
-                  >
-                    View
+                  <button class="btn-primary" (click)="verifyDocuments()" [disabled]="processing()">
+                    @if (processing() === 'VERIFY') {
+                      <div class="spinner"></div> Verifying...
+                    } @else {
+                      Mark Documents Verified
+                    }
                   </button>
+                </div>
+              } @else if (app.status === 'DOCS_VERIFIED') {
+                <div class="action-prompt ready">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  <div>
+                    <h4>Ready for Decision</h4>
+                    <p>Documents have been verified. You can now approve or reject this application.</p>
+                  </div>
+                  <div class="decision-buttons">
+                    <button class="btn-danger" (click)="openDecision('REJECTED')" [disabled]="processing()">Reject</button>
+                    <button class="btn-primary" style="background: var(--accent-green);" (click)="openDecision('APPROVED')" [disabled]="processing()">Approve</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="action-prompt completed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  <div>
+                    <h4>Review Completed</h4>
+                    <p>This application has reached a final state ({{ app.status }}) and cannot be modified further.</p>
+                  </div>
                 </div>
               }
             </div>
-          } @else {
-            <div class="empty-state compact">No documents uploaded for this application.</div>
-          }
-
-          <button
-            type="button"
-            class="button button-warning review-button"
-            [disabled]="!canVerify() || processing() !== null || !documents().length"
-            (click)="verifyDocuments()"
-          >
-            {{ processing() === 'VERIFY' ? 'Verifying...' : 'Verify Document' }}
-          </button>
-
-          <button
-            type="button"
-            class="button button-primary review-button"
-            [disabled]="!canApprove() || processing() !== null"
-            (click)="openDecision('APPROVED')"
-          >
-            {{ processing() === 'APPROVED' ? 'Approving...' : 'Approve Application' }}
-          </button>
-
-          <button
-            type="button"
-            class="button button-danger review-button"
-            [disabled]="!canReject() || processing() !== null"
-            (click)="openDecision('REJECTED')"
-          >
-            {{ processing() === 'REJECTED' ? 'Rejecting...' : 'Reject Application' }}
-          </button>
-
-          <div class="review-state">
-            Current status:
-            <app-status-badge [status]="app.status" />
           </div>
         </div>
-      </section>
+
+        <div class="sidebar-column">
+          <div class="glass-card section-card">
+            <h2 class="section-title">Submitted Documents</h2>
+            
+            @if (documentsLoading()) {
+              <div class="skeleton-row" style="height: 60px; margin-bottom: 10px;"></div>
+              <div class="skeleton-row" style="height: 60px;"></div>
+            } @else if (documents().length) {
+              <div class="documents-list">
+                @for (doc of documents(); track doc.id) {
+                  <div class="document-item">
+                    <div class="doc-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                    </div>
+                    <div class="doc-details">
+                      <span class="doc-name">{{ doc.fileName }}</span>
+                      <small class="doc-type-tag">{{ doc.documentType || 'OTHER' }}</small>
+                    </div>
+                    <button class="btn-ghost btn-sm" (click)="viewDocument(doc)">View</button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="empty-state" style="padding: 2rem 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                <p>No documents uploaded</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
     </div>
 
     <app-confirm-dialog
@@ -120,12 +147,15 @@
       [message]="decisionMessage()"
       [confirmLabel]="decisionLabel()"
       [tone]="decisionTone()"
-      (cancelled)="closeDecision()"
       (confirmed)="confirmDecision()"
+      (cancelled)="closeDecision()"
     />
   } @else {
-    <section class="surface-panel">
-      <div class="empty-state">Application not found.</div>
-    </section>
+    <div class="empty-state" style="margin-top: 4rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      <h3>Application not found</h3>
+      <p>This application may have been deleted or does not exist.</p>
+      <a routerLink="/admin/applications" class="btn-primary mt-3">Return to Applications</a>
+    </div>
   }
-</section>
+</div>

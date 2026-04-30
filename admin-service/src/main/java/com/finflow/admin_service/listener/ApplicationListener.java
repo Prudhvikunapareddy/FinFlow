@@ -28,6 +28,8 @@ public class ApplicationListener {
                 message.getName(),
                 message.getApplicantName(),
                 message.getAmount(),
+                message.getLoanType(),
+                message.getTenureMonths(),
                 message.getStatus());
     }
 }

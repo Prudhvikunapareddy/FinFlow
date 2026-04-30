@@ -57,12 +57,14 @@ class DocumentServiceTest {
         saved.setId(12L);
         saved.setFileName("terms.pdf");
         saved.setFileType("application/pdf");
+        saved.setDocumentType("SALARY_SLIP");
         saved.setApplicationId(99L);
 
         DocumentResponseDTO response = new DocumentResponseDTO();
         response.setId(12L);
         response.setFileName("terms.pdf");
         response.setFileType("application/pdf");
+        response.setDocumentType("SALARY_SLIP");
         response.setApplicationId(99L);
 
         ApplicationOwnerResponseDTO owner = new ApplicationOwnerResponseDTO();
@@ -74,7 +76,7 @@ class DocumentServiceTest {
         when(repository.save(org.mockito.ArgumentMatchers.any(Document.class))).thenReturn(saved);
         when(modelMapper.map(saved, DocumentResponseDTO.class)).thenReturn(response);
 
-        DocumentResponseDTO result = documentService.save(file, 99L, "user@finflow.com", "USER");
+        DocumentResponseDTO result = documentService.save(file, 99L, "SALARY_SLIP", "user@finflow.com", "USER");
 
         org.mockito.ArgumentCaptor<Document> captor = org.mockito.ArgumentCaptor.forClass(Document.class);
         verify(repository).save(captor.capture());
@@ -82,6 +84,7 @@ class DocumentServiceTest {
 
         assertEquals("terms.pdf", persisted.getFileName());
         assertEquals("application/pdf", persisted.getFileType());
+        assertEquals("SALARY_SLIP", persisted.getDocumentType());
         assertEquals(99L, persisted.getApplicationId());
         assertEquals("user@finflow.com", persisted.getUploadedByEmail());
         assertArrayEquals("hello".getBytes(), persisted.getData());
@@ -127,7 +130,7 @@ class DocumentServiceTest {
 
     @Test
     void getByApplicationShouldReturnDocumentMetadataForAdmin() {
-        DocumentResponseDTO response = new DocumentResponseDTO(8L, "salary-slip.pdf", "application/pdf", 42L);
+        DocumentResponseDTO response = new DocumentResponseDTO(8L, "salary-slip.pdf", "application/pdf", "SALARY_SLIP", 42L);
         when(repository.findMetadataByApplicationId(42L)).thenReturn(List.of(response));
 
         List<DocumentResponseDTO> result = documentService.getByApplication(42L, null, "ADMIN");

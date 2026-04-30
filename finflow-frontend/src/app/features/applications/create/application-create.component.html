@@ -1,43 +1,139 @@
-<section class="page-shell section-stack">
-  <div class="page-header">
+<div class="page-wrapper container loan-create-page">
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a routerLink="/dashboard">Dashboard</a>
+    <span>/</span>
+    <a routerLink="/applications">Applications</a>
+    <span>/</span>
+    <strong>New</strong>
+  </nav>
+
+  <header class="create-header">
     <div>
-      <h1>Create Loan Application</h1>
-      <p>Start a new draft and continue editing it until you are ready to submit for review.</p>
+      <p class="eyebrow">New loan request</p>
+      <h1>Start a loan application</h1>
+      <span>Create a draft now. Review and submit it after adding documents.</span>
     </div>
+    <a routerLink="/applications" class="back-link">View applications</a>
+  </header>
 
-    <a routerLink="/applications" class="pill-link">Back to Applications</a>
-  </div>
+  <div class="create-layout">
+    <section class="application-panel">
+      <div class="panel-heading">
+        <div class="step-marker">1</div>
+        <div>
+          <h2>Loan details</h2>
+          <p>Pick a loan type, amount, and repayment tenure to preview your EMI.</p>
+        </div>
+      </div>
 
-  <section class="surface-panel">
-    <div class="panel-body">
-      <form class="section-stack" [formGroup]="form" (ngSubmit)="submit()">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="create-form">
+        <div class="loan-type-grid">
+          @for (loanType of loanTypes; track loanType.value) {
+            <button type="button" class="loan-type-card" [class.active]="loanTypeValue() === loanType.value" (click)="selectLoanType(loanType.value)">
+              <span>{{ loanType.icon }}</span>
+              <strong>{{ loanType.label }}</strong>
+              <small>{{ loanType.description }}</small>
+            </button>
+          }
+        </div>
+
+        <div class="interest-rate-badge">
+          <span>Interest Rate:</span>
+          <strong>{{ selectedInterestRate() }}% per annum</strong>
+        </div>
+
         <div class="field-grid">
-          <div class="field-group">
-            <label class="field-label" for="application-name">Loan Name</label>
-            <input id="application-name" class="field-control" type="text" formControlName="name" />
-            <div class="field-error">{{ hasError('name') ? getError('name') : '' }}</div>
+          <div class="form-group" [class.has-error]="hasError('name')">
+            <label for="name">Loan purpose or name</label>
+            <input type="text" id="name" formControlName="name" placeholder="E.g. Home Renovation" autocomplete="off">
+            @if (hasError('name')) {
+              <span class="error-message">{{ getError('name') }}</span>
+            }
           </div>
 
-          <div class="field-group">
-            <label class="field-label" for="application-amount">Amount</label>
-            <input
-              id="application-amount"
-              class="field-control"
-              type="number"
-              formControlName="amount"
-              min="1000"
-              step="500"
-            />
-            <div class="field-error">{{ hasError('amount') ? getError('amount') : '' }}</div>
+          <div class="form-group amount-field" [class.has-error]="hasError('amount')">
+            <label for="amount">Requested amount</label>
+            <div class="input-with-prefix">
+              <span class="currency-prefix">₹</span>
+              <input type="number" id="amount" formControlName="amount" placeholder="0" autocomplete="off">
+            </div>
+            @if (hasError('amount')) {
+              <span class="error-message">{{ getError('amount') }}</span>
+            }
           </div>
+        </div>
+
+        <div class="tenure-section">
+          <label>Tenure</label>
+          <div class="tenure-options">
+            @for (tenure of tenureOptions; track tenure) {
+              <button type="button" [class.active]="tenureValue() === tenure" (click)="selectTenure(tenure)">{{ tenure }} months</button>
+            }
+          </div>
+          <div class="emi-preview">
+            <span>Live EMI preview</span>
+            <strong>{{ emiPreview() | currencyInr }} / month</strong>
+          </div>
+        </div>
+
+        <div class="approval-badge">Typically approved in 2-4 hours</div>
+
+        <div class="notice-row">
+          <span class="notice-icon">i</span>
+          <p>This auto-saves as a draft every 30 seconds. @if (lastSavedAt()) { Last saved at {{ lastSavedAt() }}. }</p>
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="button button-primary" [disabled]="submitting()">
-            {{ submitting() ? 'Creating Draft...' : 'Create Draft' }}
+          <a routerLink="/applications" class="btn-ghost">Cancel</a>
+          <button type="button" class="btn-ghost" (click)="saveDraft()">Save as Draft</button>
+          <button type="submit" class="btn-primary create-button" [disabled]="submitting()">
+            @if (submitting()) {
+              <span class="spinner"></span> Creating draft
+            } @else {
+              Create draft
+            }
           </button>
         </div>
       </form>
-    </div>
-  </section>
-</section>
+    </section>
+
+    <aside class="summary-panel">
+      <div class="summary-card">
+        <p class="summary-label">Draft preview</p>
+        <h3>{{ nameValue() || 'Loan application' }}</h3>
+        <strong>{{ amountValue() | currencyInr }}</strong>
+        <div class="summary-line">
+          <span>Loan type</span>
+          <b>{{ loanTypeValue() }}</b>
+        </div>
+        <div class="summary-line">
+          <span>Interest Rate</span>
+          <b>{{ selectedInterestRate() }}% p.a.</b>
+        </div>
+        <div class="summary-line">
+          <span>Tenure</span>
+          <b>{{ tenureValue() }} months</b>
+        </div>
+        <div class="summary-line">
+          <span>EMI preview</span>
+          <b>{{ emiPreview() | currencyInr }}</b>
+        </div>
+        <div class="summary-line">
+          <span>Status</span>
+          <b>Draft</b>
+        </div>
+        <div class="summary-line">
+          <span>Next step</span>
+          <b>Upload documents</b>
+        </div>
+      </div>
+
+      <div class="process-list">
+        <div><span></span><p>Application draft created</p></div>
+        <div><span></span><p>Documents uploaded</p></div>
+        <div><span></span><p>Submitted for review</p></div>
+        <div><span></span><p>Decision by credit team</p></div>
+      </div>
+    </aside>
+  </div>
+</div>

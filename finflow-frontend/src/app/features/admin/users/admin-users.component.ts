@@ -5,11 +5,17 @@ import { AdminUserRecord } from '../../../core/models/admin-user.model';
 import { AdminService } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
 
+import { LoaderComponent } from '../../../shared/components/loader/loader.component';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { computed } from '@angular/core';
+
 type AssignableRole = 'USER' | 'ADMIN';
 
 @Component({
   selector: 'app-admin-users',
   standalone: true,
+  imports: [LoaderComponent, ReactiveFormsModule],
   templateUrl: './admin-users.component.html',
   styleUrl: './admin-users.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,6 +29,23 @@ export class AdminUsersComponent {
   protected readonly savingUserId = signal<number | null>(null);
   protected readonly users = signal<AdminUserRecord[]>([]);
   protected readonly roleDrafts = signal<Record<number, AssignableRole>>({});
+
+  protected searchControl = new FormControl('');
+  protected searchValue = toSignal(this.searchControl.valueChanges, { initialValue: '' });
+
+  protected readonly filteredUsers = computed(() => {
+    let filtered = this.users();
+    const search = this.searchValue()?.toLowerCase() || '';
+    
+    if (search) {
+      filtered = filtered.filter(user => 
+        user.email?.toLowerCase().includes(search) || 
+        user.id.toString().includes(search)
+      );
+    }
+    
+    return filtered;
+  });
 
   constructor() {
     this.loadUsers();

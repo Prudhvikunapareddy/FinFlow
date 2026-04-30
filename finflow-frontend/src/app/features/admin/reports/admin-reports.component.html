@@ -1,0 +1,45 @@
+<section class="admin-page">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Reports</h1>
+      <p class="page-subtitle">Live portfolio intelligence from the admin service.</p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loader />
+  } @else {
+    <section class="reports-grid">
+      <article class="glass-card report-card">
+        <h2>Applications per month</h2>
+        <div class="bar-chart">
+          @for (month of monthlyReport(); track month.label) {
+            <div>
+              <span [style.height.%]="month.height"></span>
+              <b>{{ month.value }}</b>
+              <small>{{ month.label }}</small>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="glass-card report-card">
+        <h2>Approved vs Rejected vs Pending</h2>
+        <div class="pie-list">
+          @for (item of statusReport(); track item.label) {
+            <div>
+              <span [style.background]="item.color"></span>
+              <strong>{{ item.label }}</strong>
+              <em>{{ item.value }} ({{ item.percent }}%)</em>
+            </div>
+          }
+        </div>
+      </article>
+
+      <article class="glass-card report-card total-card">
+        <span>Total disbursed this month</span>
+        <strong>{{ disbursedThisMonth() | currencyInr }}</strong>
+      </article>
+    </section>
+  }
+</section>

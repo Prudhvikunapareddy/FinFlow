@@ -5,6 +5,8 @@ public class ApplicationMessageDTO {
     private String name;
     private String applicantName;
     private Double amount;
+    private String loanType;
+    private Integer tenureMonths;
     private String status;
     private String action;
 
@@ -16,6 +18,8 @@ public class ApplicationMessageDTO {
         this.name = builder.name;
         this.applicantName = builder.applicantName;
         this.amount = builder.amount;
+        this.loanType = builder.loanType;
+        this.tenureMonths = builder.tenureMonths;
         this.status = builder.status;
         this.action = builder.action;
     }
@@ -64,6 +68,22 @@ public class ApplicationMessageDTO {
         this.amount = amount;
     }
 
+    public String getLoanType() {
+        return loanType;
+    }
+
+    public void setLoanType(String loanType) {
+        this.loanType = loanType;
+    }
+
+    public Integer getTenureMonths() {
+        return tenureMonths;
+    }
+
+    public void setTenureMonths(Integer tenureMonths) {
+        this.tenureMonths = tenureMonths;
+    }
+
     public String getAction() {
         return action;
     }
@@ -77,6 +97,8 @@ public class ApplicationMessageDTO {
         private String name;
         private String applicantName;
         private Double amount;
+        private String loanType;
+        private Integer tenureMonths;
         private String status;
         private String action;
 
@@ -97,6 +119,16 @@ public class ApplicationMessageDTO {
 
         public Builder amount(Double amount) {
             this.amount = amount;
+            return this;
+        }
+
+        public Builder loanType(String loanType) {
+            this.loanType = loanType;
+            return this;
+        }
+
+        public Builder tenureMonths(Integer tenureMonths) {
+            this.tenureMonths = tenureMonths;
             return this;
         }
 

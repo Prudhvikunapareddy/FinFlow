@@ -1,48 +1,54 @@
-<div class="upload-stack">
-  <div class="field-group">
-    <label class="field-label" for="document-application-id">Application ID</label>
-    <input
-      id="document-application-id"
-      class="field-control"
-      type="number"
-      [value]="applicationId()"
-      readonly
-    />
+<div class="glass-card upload-card">
+  <div class="upload-header">
+    <h2>Supporting Documents</h2>
+    <span title="Upload PAN, salary slip, bank statement, or address proof.">i</span>
   </div>
 
-  <div class="field-group">
-    <label class="field-label" for="document-file">Supporting Document</label>
-    <input
-      #fileInput
-      id="document-file"
-      class="field-control upload-input"
-      type="file"
-      accept=".pdf,.jpg,.jpeg,.png"
-      (change)="onFileSelected($event)"
-    />
-    <div class="upload-meta">
-      @if (selectedFileName()) {
-        <span class="inline-muted">Selected: {{ selectedFileName() }}</span>
-      } @else {
-        <span class="inline-muted">Accepted formats: PDF, JPG, PNG</span>
+  <label class="doc-type-field">
+    <span>Document type</span>
+    <select [(ngModel)]="selectedDocumentType">
+      @for (type of documentTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
       }
-    </div>
+    </select>
+  </label>
+
+  <div
+    class="dropzone"
+    [class.dragging]="isDragging()"
+    [class.has-file]="selectedFileName()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+    <input type="file" id="fileInput" class="file-input" (change)="onFileSelected($event)" accept=".pdf,.jpg,.jpeg,.png" #fileInput>
+
+    @if (selectedFileName()) {
+      <div class="file-pill">
+        <span class="file-icon">📄</span>
+        <div>
+          <strong>{{ selectedFileName() }}</strong>
+          @if (selectedFileSize()) { <small>{{ selectedFileSize() }}</small> }
+          @if (uploadedDocument()?.documentType) { <small class="doc-type-tag">{{ uploadedDocument()?.documentType }}</small> }
+        </div>
+        <button type="button" (click)="$event.stopPropagation(); fileInput.value = ''; removeFile()" aria-label="Remove selected file">✕</button>
+      </div>
+    } @else {
+      <label for="fileInput" class="dropzone-content">
+        <span class="upload-cloud">☁</span>
+        <strong>Drag & drop your file here</strong>
+        <em>or click to browse</em>
+        <small>PDF, JPG, PNG — max 5MB</small>
+      </label>
+    }
   </div>
 
-  <div class="upload-actions">
-    <button
-      type="button"
-      class="button button-primary"
-      [disabled]="uploading() || !selectedFileName()"
-      (click)="upload(fileInput)"
-    >
-      {{ uploading() ? 'Uploading...' : 'Upload Document' }}
-    </button>
-  </div>
-
-  @if (uploadedDocument(); as document) {
-    <div class="upload-success">
-      Latest upload confirmed: <strong>{{ document.fileName }}</strong>
-    </div>
-  }
+  <button class="btn-primary upload-button" (click)="upload()" [disabled]="!selectedFileName() || uploading()">
+    @if (uploading()) {
+      <span class="progress-line"></span> Uploading...
+    } @else if (uploadedDocument()) {
+      Uploaded successfully
+    } @else {
+      Upload Document
+    }
+  </button>
 </div>

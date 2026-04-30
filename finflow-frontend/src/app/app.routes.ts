@@ -31,6 +31,12 @@ export const routes: Routes = [
       import('./features/applications/applications.routes').then((module) => module.APPLICATION_ROUTES),
   },
   {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((module) => module.ProfileComponent),
+  },
+  {
     path: 'admin',
     canActivate: [adminGuard],
     loadChildren: () => import('./features/admin/admin.routes').then((module) => module.ADMIN_ROUTES),

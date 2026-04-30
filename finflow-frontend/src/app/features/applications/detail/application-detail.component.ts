@@ -6,6 +6,7 @@ import { finalize, map, switchMap } from 'rxjs';
 import { ApplicationResponse, ApplicationStatus } from '../../../core/models/application.model';
 import { DocumentResponse } from '../../../core/models/document.model';
 import { ApplicationService } from '../../../core/services/application.service';
+import { DocumentService } from '../../../core/services/document.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -32,14 +33,17 @@ export class ApplicationDetailComponent {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly applicationService = inject(ApplicationService);
+  private readonly documentService = inject(DocumentService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly loading = signal(true);
+  protected readonly documentsLoading = signal(false);
   protected readonly saving = signal(false);
   protected readonly pendingAction = signal<'submit' | 'delete' | null>(null);
   protected readonly lastUploadedFile = signal<string | null>(null);
   protected readonly application = signal<ApplicationResponse | null>(null);
+  protected readonly documents = signal<DocumentResponse[]>([]);
 
   protected readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required]],
@@ -65,8 +69,23 @@ export class ApplicationDetailComponent {
         next: (application) => {
           this.application.set(application);
           this.form.reset({ name: application.name, amount: application.amount });
+          this.loadDocuments(application.id);
         },
         error: () => this.application.set(null),
+      });
+  }
+
+  private loadDocuments(applicationId: number): void {
+    this.documentsLoading.set(true);
+    this.documentService
+      .getByApplication(applicationId)
+      .pipe(
+        finalize(() => this.documentsLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (docs) => this.documents.set(docs),
+        error: () => this.documents.set([]),
       });
   }
 
@@ -119,6 +138,7 @@ export class ApplicationDetailComponent {
 
   protected onUpload(document: DocumentResponse): void {
     this.lastUploadedFile.set(document.fileName);
+    this.documents.update(docs => [...docs, document]);
   }
 
   protected hasError(controlName: 'name' | 'amount'): boolean {

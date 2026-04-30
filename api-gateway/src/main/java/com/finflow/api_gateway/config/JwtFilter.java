@@ -65,8 +65,10 @@ public class JwtFilter implements GlobalFilter {
     }
 
     private boolean isPublicPath(String path) {
-        return path.startsWith("/gateway/auth")
-                || path.startsWith("/auth")
+        return path.startsWith("/gateway/auth/login")
+                || path.startsWith("/gateway/auth/signup")
+                || path.startsWith("/auth/login")
+                || path.startsWith("/auth/signup")
                 || path.endsWith("/test")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui")

@@ -1,3 +1,6 @@
-<span class="status-badge" [class]="'status-badge status-badge--' + appearance()">
+<span class="badge" [class]="appearance()">
+  @if (appearance() === 'submitted') {
+    <span class="pulse-dot"></span>
+  }
   {{ label() }}
 </span>

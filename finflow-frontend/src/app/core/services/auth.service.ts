@@ -2,10 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { AuthCredentials, JwtPayload, UserRole } from '../models/auth.model';
+import { AuthCredentials, JwtPayload, SignupPayload, UserProfile, ChangePasswordPayload, UserRole } from '../models/auth.model';
 import { API_BASE_URL } from '../tokens/api-base-url.token';
 
 const TOKEN_KEY = 'finflow_token';
+const PROFILE_KEY = 'finflow_profile';
 
 interface DecodedSession {
   token: string;
@@ -33,11 +34,53 @@ export class AuthService {
       .pipe(tap((token) => this.persistSession(token)));
   }
 
-  signup(email: string, password: string): Observable<string> {
-    const payload: AuthCredentials = { email: email.trim(), password };
+  signup(signup: SignupPayload): Observable<string> {
+    const payload: SignupPayload = {
+      ...signup,
+      email: signup.email.trim(),
+      firstName: signup.firstName.trim(),
+      lastName: signup.lastName.trim(),
+      phoneNumber: signup.phoneNumber.trim(),
+      referralCode: signup.referralCode?.trim() || undefined,
+    };
     return this.http
       .post(`${this.apiBaseUrl}/auth/signup`, payload, { responseType: 'text' })
-      .pipe(tap((token) => this.persistSession(token)));
+      .pipe(tap((token) => {
+        this.persistLocalProfile(payload);
+        this.persistSession(token);
+      }));
+  }
+
+  getProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.apiBaseUrl}/auth/profile`);
+  }
+
+  updateProfile(profile: Partial<UserProfile>): Observable<UserProfile> {
+    return this.http.put<UserProfile>(`${this.apiBaseUrl}/auth/profile`, profile).pipe(
+      tap((updated) => this.persistLocalProfile({
+        firstName: updated.firstName ?? '',
+        lastName: updated.lastName ?? '',
+        dateOfBirth: updated.dateOfBirth ?? '',
+        phoneNumber: updated.phoneNumber ?? '',
+        email: updated.email,
+        password: '',
+      })),
+    );
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<string> {
+    return this.http.put(`${this.apiBaseUrl}/auth/password`, payload, { responseType: 'text' });
+  }
+
+  getLocalProfile(): UserProfile | null {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as UserProfile;
+    } catch {
+      localStorage.removeItem(PROFILE_KEY);
+      return null;
+    }
   }
 
   logout(): void {
@@ -76,6 +119,17 @@ export class AuthService {
 
     localStorage.setItem(TOKEN_KEY, token);
     this.session.set(decoded);
+  }
+
+  private persistLocalProfile(profile: SignupPayload): void {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify({
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      dateOfBirth: profile.dateOfBirth,
+      phoneNumber: profile.phoneNumber,
+      email: profile.email.trim(),
+      createdAt: this.getLocalProfile()?.createdAt ?? new Date().toISOString(),
+    }));
   }
 
   private restoreSession(): DecodedSession | null {

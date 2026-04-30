@@ -1,119 +1,168 @@
-<section class="page-shell section-stack">
-  <div class="page-header">
-    <div>
-      <h1>Application Detail</h1>
-      <p>Review the current state of your loan request and attach supporting documents.</p>
+<div class="page-wrapper container">
+  @if (loading()) {
+    <div class="skeleton-container" style="margin-top: 2rem;">
+      <div class="skeleton-header" style="width: 200px;"></div>
+      <div style="display: flex; gap: 2rem; margin-top: 2rem;">
+        <div class="skeleton-row" style="flex: 3; height: 400px;"></div>
+        <div class="skeleton-row" style="flex: 2; height: 300px;"></div>
+      </div>
+    </div>
+  } @else if (application(); as app) {
+    <div class="breadcrumb">
+      <a routerLink="/dashboard">Dashboard</a>
+      <span class="separator">/</span>
+      <a routerLink="/applications">Applications</a>
+      <span class="separator">/</span>
+      <span class="current">#{{ app.id }}</span>
     </div>
 
-    <a routerLink="/applications" class="pill-link">Back to Applications</a>
-  </div>
-
-  @if (loading()) {
-    <section class="surface-panel">
-      <div class="empty-state">Loading application...</div>
-    </section>
-  } @else if (application(); as app) {
-    <div class="section-grid two-up">
-      <div class="section-stack">
-        <section class="surface-panel">
-          <div class="panel-header">
-            <h3>{{ app.name }}</h3>
-            <p>Application #{{ app.id }} owned by {{ app.applicantName }}</p>
+    <div class="detail-layout">
+      <div class="main-column">
+        
+        <!-- Banners based on status -->
+        @if (app.status === 'SUBMITTED') {
+          <div class="status-banner banner-warning">
+            <div class="pulse-indicator"></div>
+            <div class="banner-content">
+              <h3>Under Review</h3>
+              <p>Your application is being reviewed by our team.</p>
+            </div>
           </div>
-          <div class="panel-body section-stack">
-            <div class="detail-grid">
-              <div class="detail-item">
-                <span class="detail-label">Loan Name</span>
-                <strong>{{ app.name }}</strong>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Amount</span>
-                <strong>{{ app.amount | currencyInr }}</strong>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Applicant</span>
-                <strong>{{ app.applicantName }}</strong>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Status</span>
-                <app-status-badge [status]="app.status" />
+        }
+        
+        @if (app.status === 'APPROVED') {
+          <div class="status-banner banner-success">
+            <div class="banner-content">
+              <h3>🎉 Congratulations! Your loan is approved</h3>
+              <p>We will contact you shortly with the next steps for disbursement.</p>
+            </div>
+          </div>
+        }
+
+        @if (app.status === 'REJECTED') {
+          <div class="status-banner banner-error">
+            <div class="banner-content">
+              <h3>Application Rejected</h3>
+              <p>Unfortunately, we cannot proceed with your loan request at this time.</p>
+            </div>
+          </div>
+        }
+
+        <div class="glass-card detail-card">
+          <div class="card-header">
+            <div class="header-main">
+              <h1 class="loan-name">{{ app.name }}</h1>
+              <div class="loan-amount text-amount" [class]="app.status === 'APPROVED' ? 'text-green' : ''">
+                {{ app.amount | currencyInr }}
               </div>
             </div>
+            <app-status-badge [status]="app.status" class="large-badge" />
+          </div>
 
-            @if (isDraft()) {
-              <form class="section-stack editor-form" [formGroup]="form" (ngSubmit)="saveChanges()">
-                <div class="field-grid">
-                  <div class="field-group">
-                    <label class="field-label" for="detail-name">Loan Name</label>
-                    <input id="detail-name" class="field-control" type="text" formControlName="name" />
-                    <div class="field-error">{{ hasError('name') ? getError('name') : '' }}</div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Applicant Name</span>
+              <span class="info-value">{{ app.applicantName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Application ID</span>
+              <span class="info-value mono">#{{ app.id }}</span>
+            </div>
+          </div>
+
+          @if (app.adminNotes) {
+            <div class="admin-notes-section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;">
+              <h4 style="margin: 0 0 0.5rem 0; color: var(--text-2); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Admin Note</h4>
+              <p style="margin: 0; color: var(--text-1); line-height: 1.6; white-space: pre-wrap;">{{ app.adminNotes }}</p>
+            </div>
+          }
+
+          @if (isDraft()) {
+            <div class="draft-actions-section">
+              <div class="section-divider">
+                <span>Edit Application details</span>
+              </div>
+              
+              <form [formGroup]="form" (ngSubmit)="saveChanges()" class="edit-form">
+                <div class="form-row">
+                  <div class="form-group" [class.has-error]="hasError('name')">
+                    <label for="name">Loan Purpose</label>
+                    <input type="text" id="name" formControlName="name" placeholder="E.g. Home Renovation">
+                    @if (hasError('name')) {
+                      <span class="error-message">{{ getError('name') }}</span>
+                    }
                   </div>
-
-                  <div class="field-group">
-                    <label class="field-label" for="detail-amount">Amount</label>
-                    <input
-                      id="detail-amount"
-                      class="field-control"
-                      type="number"
-                      formControlName="amount"
-                      min="1000"
-                      step="500"
-                    />
-                    <div class="field-error">{{ hasError('amount') ? getError('amount') : '' }}</div>
+                  
+                  <div class="form-group" [class.has-error]="hasError('amount')">
+                    <label for="amount">Amount Requested</label>
+                    <input type="number" id="amount" formControlName="amount" placeholder="0">
+                    @if (hasError('amount')) {
+                      <span class="error-message">{{ getError('amount') }}</span>
+                    }
                   </div>
                 </div>
 
-                <div class="detail-actions">
-                  <button type="submit" class="button button-primary" [disabled]="saving()">
+                <div class="form-actions-right">
+                  <button type="submit" class="btn-ghost" [disabled]="saving() || form.pristine || form.invalid">
                     {{ saving() ? 'Saving...' : 'Save Changes' }}
-                  </button>
-                  <button type="button" class="button button-success" [disabled]="saving()" (click)="openAction('submit')">
-                    Submit for Review
-                  </button>
-                  <button type="button" class="button button-danger" [disabled]="saving()" (click)="openAction('delete')">
-                    Delete Draft
                   </button>
                 </div>
               </form>
-            } @else {
-              <div class="readonly-note">
-                This application is now read-only because it has moved beyond draft status.
+
+              <div class="submit-section">
+                <div class="warning-box">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <span>Once submitted, you cannot edit this application.</span>
+                </div>
+                
+                <div class="main-actions">
+                  <button type="button" class="btn-ghost btn-danger" style="border: 1px solid #E24B4A" (click)="openAction('delete')" [disabled]="saving()">
+                    Delete Draft
+                  </button>
+                  <button type="button" class="btn-primary" (click)="openAction('submit')" [disabled]="saving()">
+                    Submit Application
+                  </button>
+                </div>
               </div>
-            }
-          </div>
-        </section>
+            </div>
+          }
+        </div>
       </div>
 
-      <div class="section-stack">
-        <section class="surface-panel">
-          <div class="panel-header">
-            <h3>Document Upload</h3>
-            <p>Upload PDFs or images that support this application.</p>
-          </div>
-          <div class="panel-body">
-            <app-documents-upload [applicationId]="app.id" (uploaded)="onUpload($event)" />
-
-            @if (lastUploadedFile()) {
-              <p class="upload-note">Latest confirmed file: {{ lastUploadedFile() }}</p>
-            }
-          </div>
-        </section>
-
-        <section class="surface-panel">
-          <div class="panel-header">
-            <h3>Workflow Snapshot</h3>
-            <p>Your current stage inside the FinFlow lifecycle.</p>
-          </div>
-          <div class="panel-body">
-            <div class="timeline-line">
-              <span class="timeline-step" [class.is-active]="status() === 'DRAFT'">Draft</span>
-              <span class="timeline-step" [class.is-active]="status() === 'SUBMITTED'">Submitted</span>
-              <span class="timeline-step" [class.is-active]="status() === 'DOCS_VERIFIED'">Docs Verified</span>
-              <span class="timeline-step" [class.is-active]="status() === 'APPROVED'">Approved</span>
-              <span class="timeline-step" [class.is-active]="status() === 'REJECTED'">Rejected</span>
+      <div class="sidebar-column">
+        @if (app.status !== 'APPROVED' && app.status !== 'REJECTED') {
+          <app-documents-upload
+            [applicationId]="app.id"
+            (uploaded)="onUpload($event)"
+          />
+          
+          @if (lastUploadedFile()) {
+            <div class="upload-success-toast">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span class="uploaded-filename">{{ lastUploadedFile() }}</span>
+            </div>
+          }
+        }
+        
+        @if (documentsLoading()) {
+          <div class="skeleton-row" style="height: 60px; margin-top: 1.5rem;"></div>
+        } @else if (documents().length) {
+          <div class="glass-card section-card" style="margin-top: 1.5rem;">
+            <h2 class="section-title">Uploaded Documents</h2>
+            <div class="documents-list">
+              @for (doc of documents(); track doc.id) {
+                <div class="document-item" style="display: flex; align-items: center; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 8px;">
+                  <div class="doc-icon" style="color: var(--text-2); margin-right: 12px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                  </div>
+                  <div class="doc-details" style="flex: 1; overflow: hidden;">
+                    <div class="doc-name" style="font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ doc.fileName }}</div>
+                  </div>
+                </div>
+              }
             </div>
           </div>
-        </section>
+        }
       </div>
     </div>
 
@@ -123,12 +172,15 @@
       [message]="actionMessage()"
       [confirmLabel]="actionLabel()"
       [tone]="actionTone()"
-      (cancelled)="closeAction()"
       (confirmed)="confirmAction()"
+      (cancelled)="closeAction()"
     />
   } @else {
-    <section class="surface-panel">
-      <div class="empty-state">Application not found.</div>
-    </section>
+    <div class="empty-state" style="margin-top: 4rem;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      <h3>Application not found</h3>
+      <p>This application may have been deleted or you don't have access to it.</p>
+      <a routerLink="/applications" class="btn-primary mt-3">Return to Applications</a>
+    </div>
   }
-</section>
+</div>

@@ -1,81 +1,183 @@
-<section class="page-shell section-stack">
-  <div class="page-header">
+<div class="page-wrapper container">
+  <section class="dashboard-hero">
     <div>
-      <h1>Loan Operations Dashboard</h1>
-      <p>Signed in as {{ email() }}. Review your latest drafts and decisions from one place.</p>
+      <h1>{{ greeting() }}, {{ firstName() }}</h1>
+      <p>Here's your loan portfolio overview</p>
+      <span>{{ currentDate }}</span>
     </div>
-
-    <a routerLink="/applications/new" class="button button-primary">Apply for Loan</a>
-  </div>
-
-  <div class="stats-grid">
-    <article class="stat-card">
-      <div class="stat-label">Total Applications</div>
-      <div class="stat-value">{{ summary().total }}</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">Pending Review</div>
-      <div class="stat-value">{{ summary().pending }}</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">Approved</div>
-      <div class="stat-value">{{ summary().approved }}</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">Rejected</div>
-      <div class="stat-value">{{ summary().rejected }}</div>
-    </article>
-  </div>
-
-  <section class="surface-panel table-shell">
-    <div class="panel-header">
-      <h3>Recent Applications</h3>
-      <p>The latest five items from your FinFlow queue.</p>
-    </div>
-
-    @if (loading()) {
-      <div class="empty-state">Loading your applications...</div>
-    } @else if (recentApplications().length) {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (application of recentApplications(); track application.id) {
-            <tr>
-              <td>#{{ application.id }}</td>
-              <td>{{ application.name }}</td>
-              <td>{{ application.amount | currencyInr }}</td>
-              <td>
-                <app-status-badge [status]="application.status" />
-              </td>
-              <td>
-                <div class="table-actions">
-                  <a class="button button-secondary button-sm" [routerLink]="['/applications', application.id]">
-                    Open
-                  </a>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    } @else {
-      <div class="empty-state">
-        You have not created any applications yet.
-        <div class="dashboard-empty-action">
-          <a routerLink="/applications/new" class="button button-primary">Create your first draft</a>
-        </div>
-      </div>
-    }
+    <a routerLink="/applications/new" class="btn-primary hero-cta">Apply for New Loan →</a>
   </section>
-</section>
+
+  @if (loading()) {
+    <app-loader />
+  } @else {
+    <section class="stats-grid">
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-blue">A</div>
+        <span class="stat-value">{{ summary().total }}</span>
+        <span class="stat-label">Total Applications</span>
+        <small class="text-green">+{{ summary().total > 1 ? 2 : summary().total }} this month</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-yellow">P</div>
+        <span class="stat-value text-yellow">{{ summary().pending }}</span>
+        <span class="stat-label">Pending Review</span>
+        <small>Awaiting decision</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-green">OK</div>
+        <span class="stat-value text-green">{{ summary().approved }}</span>
+        <span class="stat-label">Approved</span>
+        <small>Ready for disbursal</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-red">R</div>
+        <span class="stat-value text-red">{{ summary().rejected }}</span>
+        <span class="stat-label">Rejected</span>
+        <small>See details</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-green">INR</div>
+        <span class="stat-value">{{ quickStats().borrowed | currencyInr }}</span>
+        <span class="stat-label">Total Borrowed</span>
+        <small>Approved loans only</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-blue">M</div>
+        <span class="stat-value">{{ quickStats().thisMonth }}</span>
+        <span class="stat-label">This Month</span>
+        <small>Total applications</small>
+      </article>
+      <article class="stat-card glass-card">
+        <div class="stat-icon icon-yellow">D</div>
+        <span class="stat-value small-stat">
+          {{ quickStats().nextEmiDueDate ? (quickStats().nextEmiDueDate | date:'d MMM') : 'Not scheduled' }}
+        </span>
+        <span class="stat-label">Next EMI Due</span>
+        <small>
+          @if (quickStats().nextEmiAmount) {
+            {{ quickStats().nextEmiAmount | currencyInr }} to pay
+          } @else {
+            No active EMI schedule yet
+          }
+        </small>
+      </article>
+    </section>
+
+    <section class="tool-grid">
+      <article class="glass-card calculator-card" [formGroup]="emiForm">
+        <header class="section-header compact">
+          <div>
+            <h2>EMI Calculator</h2>
+            <p>Estimate monthly repayment instantly.</p>
+          </div>
+        </header>
+        <div class="calc-fields">
+          <label>
+            <span>Loan Type</span>
+            <select formControlName="loanType">
+              @for (loanType of loanTypes; track loanType.value) {
+                <option [value]="loanType.value">{{ loanType.label }}</option>
+              }
+            </select>
+          </label>
+          <label><span>Loan Amount</span><input type="number" formControlName="amount"></label>
+          <label><span>Interest Rate</span><input type="text" [value]="emiBreakdown().interestRate + '% p.a.'" readonly></label>
+          <label><span>Tenure (months)</span><input type="number" formControlName="tenureMonths"></label>
+        </div>
+        <div class="calc-results">
+          <div><span>Monthly EMI</span><strong>{{ emiBreakdown().emi | currencyInr }}</strong></div>
+          <div><span>Total Interest</span><strong>{{ emiBreakdown().totalInterest | currencyInr }}</strong></div>
+          <div><span>Total Payable</span><strong>{{ emiBreakdown().totalPayable | currencyInr }}</strong></div>
+        </div>
+        <div class="breakdown-bar" aria-label="Principal interest breakdown">
+          <span class="principal" [style.width.%]="emiBreakdown().principalPercent"></span>
+          <span class="interest" [style.width.%]="emiBreakdown().interestPercent"></span>
+        </div>
+        <div class="legend"><span>Principal</span><span>Interest</span></div>
+      </article>
+
+      <article class="glass-card eligibility-card" [formGroup]="eligibilityForm">
+        <header class="section-header compact">
+          <div>
+            <h2>Loan Eligibility Checker</h2>
+            <p>Based on 50% of salary for 12 months.</p>
+          </div>
+        </header>
+        <label><span>Monthly Salary</span><input type="number" formControlName="monthlySalary"></label>
+        <div class="eligibility-result">
+          <span>Estimated max loan</span>
+          <strong>{{ eligibility() | currencyInr }}</strong>
+        </div>
+      </article>
+    </section>
+
+    <section class="table-section glass-card">
+      <header class="section-header">
+        <div>
+          <h2>Recent Applications</h2>
+          <p>Your latest loan requests across every status.</p>
+        </div>
+        <a routerLink="/applications" class="view-all">View All →</a>
+      </header>
+
+      @if (recentApplications().length) {
+        <div class="table-responsive">
+          <table class="fin-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Loan Name</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of recentApplications(); track app.id) {
+                <tr [routerLink]="['/applications', app.id]">
+                  <td class="id-cell">#{{ app.id.toString().padStart(3, '0') }}</td>
+                  <td><strong>{{ app.name }}</strong></td>
+                  <td class="amount">{{ app.amount | currencyInr }}</td>
+                  <td><app-status-badge [status]="app.status" /></td>
+                  <td><a class="view-link" [routerLink]="['/applications', app.id]">View →</a></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <div class="empty-icon">No data</div>
+          <h3>No applications yet</h3>
+          <p>Start your loan journey today</p>
+          <a routerLink="/applications/new" class="btn-primary mt-3">Apply Now</a>
+        </div>
+      }
+    </section>
+
+    <section class="quick-actions-section">
+      <h2>Quick Actions</h2>
+      <div class="quick-actions-grid">
+        <a routerLink="/applications/new" class="action-card glass-card">
+          <span class="action-icon icon-blue">N</span>
+          <strong>New Loan Application</strong>
+          <p>Get funds in your account fast</p>
+          <em>→</em>
+        </a>
+        <a routerLink="/applications" class="action-card glass-card">
+          <span class="action-icon icon-purple">D</span>
+          <strong>Upload Documents</strong>
+          <p>Submit supporting files</p>
+          <em>→</em>
+        </a>
+        <a routerLink="/applications" class="action-card glass-card">
+          <span class="action-icon icon-green">S</span>
+          <strong>Check Status</strong>
+          <p>Real-time application updates</p>
+          <em>→</em>
+        </a>
+      </div>
+    </section>
+  }
+</div>

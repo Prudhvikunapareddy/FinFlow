@@ -1,6 +1,7 @@
 package com.finflow.document_service.service;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +30,12 @@ public class DocumentService {
     @Value("${application.service.url:http://APPLICATION-SERVICE}")
     private String applicationServiceUrl;
 
-    public DocumentResponseDTO save(MultipartFile file, Long applicationId, String email, String role) throws Exception {
+    public DocumentResponseDTO save(MultipartFile file, Long applicationId, String documentType, String email, String role) throws Exception {
         validateApplicationAccess(applicationId, email, role);
         Document doc = new Document();
         doc.setFileName(file.getOriginalFilename());
         doc.setFileType(file.getContentType());
+        doc.setDocumentType(normalizeDocumentType(documentType));
         doc.setData(file.getBytes());
         doc.setApplicationId(applicationId);
         doc.setUploadedByEmail(email);
@@ -82,5 +84,16 @@ public class DocumentService {
 
     private boolean isAdmin(String role) {
         return role != null && "ADMIN".equalsIgnoreCase(role.trim());
+    }
+
+    private String normalizeDocumentType(String documentType) {
+        if (documentType == null || documentType.isBlank()) {
+            return "OTHER";
+        }
+        String normalized = documentType.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("SALARY_SLIP", "BANK_STATEMENT", "ID_PROOF", "ADDRESS_PROOF", "OTHER").contains(normalized)) {
+            throw new RuntimeException("Invalid document type: " + documentType);
+        }
+        return normalized;
     }
 }

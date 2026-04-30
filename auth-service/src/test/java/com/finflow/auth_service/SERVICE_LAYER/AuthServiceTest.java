@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -40,12 +41,12 @@ class AuthServiceTest {
 
     @Test
     void signupShouldCreateUserWithEncodedPasswordAndDefaultRole() {
-        SignupRequest request = new SignupRequest();
-        request.setEmail(" user@finflow.com ");
-        request.setPassword("secret");
+        SignupRequest request = validSignupRequest();
 
         when(userRepository.findByEmail("user@finflow.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("secret")).thenReturn("encoded-secret");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtUtil.generateToken("user@finflow.com", "USER")).thenReturn("jwt-token");
 
         String result = authService.signup(request);
 
@@ -54,15 +55,19 @@ class AuthServiceTest {
 
         User savedUser = userCaptor.getValue();
         assertEquals("user@finflow.com", savedUser.getEmail());
+        assertEquals("Asha", savedUser.getFirstName());
+        assertEquals("Sharma", savedUser.getLastName());
+        assertEquals(LocalDate.now().minusYears(24), savedUser.getDateOfBirth());
+        assertEquals("9876543210", savedUser.getPhoneNumber());
+        assertEquals("FRIEND10", savedUser.getReferralCode());
         assertEquals("encoded-secret", savedUser.getPassword());
         assertEquals("USER", savedUser.getRole());
-        assertEquals("User registered", result);
+        assertEquals("jwt-token", result);
     }
 
     @Test
     void signupShouldRejectExistingEmail() {
-        SignupRequest request = new SignupRequest();
-        request.setEmail("user@finflow.com");
+        SignupRequest request = validSignupRequest();
 
         when(userRepository.findByEmail("user@finflow.com")).thenReturn(Optional.of(new User()));
 
@@ -119,5 +124,17 @@ class AuthServiceTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> authService.login(request));
 
         assertEquals("Invalid password", exception.getMessage());
+    }
+
+    private SignupRequest validSignupRequest() {
+        SignupRequest request = new SignupRequest();
+        request.setFirstName("Asha");
+        request.setLastName("Sharma");
+        request.setDateOfBirth(LocalDate.now().minusYears(24));
+        request.setPhoneNumber("9876543210");
+        request.setEmail(" user@finflow.com ");
+        request.setPassword("secret");
+        request.setReferralCode(" FRIEND10 ");
+        return request;
     }
 }

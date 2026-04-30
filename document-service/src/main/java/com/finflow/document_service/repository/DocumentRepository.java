@@ -17,6 +17,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
                 d.id,
                 d.fileName,
                 d.fileType,
+                d.documentType,
                 d.applicationId
             )
             from Document d

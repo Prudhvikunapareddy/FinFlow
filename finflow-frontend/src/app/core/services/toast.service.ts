@@ -17,7 +17,7 @@ export class ToastService {
 
     window.setTimeout(() => {
       this.dismiss(toast.id);
-    }, 3000);
+    }, 4000);
   }
 
   success(message: string): void {
@@ -30,6 +30,10 @@ export class ToastService {
 
   info(message: string): void {
     this.show(message, 'info');
+  }
+
+  warning(message: string): void {
+    this.show(message, 'warning');
   }
 
   dismiss(id: string): void {

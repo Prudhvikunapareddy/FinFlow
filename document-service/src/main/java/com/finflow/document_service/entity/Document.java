@@ -10,6 +10,7 @@ public class Document {
 
     private String fileName;
     private String fileType;
+    private String documentType;
 
     @Lob
     private byte[] data;
@@ -42,6 +43,14 @@ public class Document {
 
     public void setFileType(String fileType) {
         this.fileType = fileType;
+    }
+
+    public String getDocumentType() {
+        return documentType;
+    }
+
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
     }
 
     public byte[] getData() {

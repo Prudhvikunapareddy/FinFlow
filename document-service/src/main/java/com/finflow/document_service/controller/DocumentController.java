@@ -30,12 +30,13 @@ public class DocumentController {
             @Parameter(description = "Document file to upload")
             @RequestPart("file") MultipartFile file,
             @RequestParam("applicationId") Long applicationId,
+            @RequestParam(value = "documentType", defaultValue = "OTHER") String documentType,
             @Parameter(hidden = true)
             @RequestHeader(value = "X-User-Email", required = false) String email,
             @Parameter(hidden = true)
             @RequestHeader(value = "X-User-Role", required = false) String role) throws Exception {
 
-        return service.save(file, applicationId, email, role);
+        return service.save(file, applicationId, documentType, email, role);
     }
 
     @GetMapping("/{id}")

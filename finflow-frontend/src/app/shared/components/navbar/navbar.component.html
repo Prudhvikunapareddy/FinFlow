@@ -1,30 +1,92 @@
-<header class="navbar">
-  <div class="navbar__brand">
-    <a [routerLink]="homeLink()" class="navbar__logo">
-      <span class="navbar__mark">F</span>
-      <span>FinFlow</span>
-    </a>
-  </div>
-
-  <nav class="navbar__nav">
-    @if (isAdmin()) {
-      <a routerLink="/admin/applications" routerLinkActive="is-active" class="navbar__link">Applications</a>
-      <a routerLink="/admin/users" routerLinkActive="is-active" class="navbar__link">Users</a>
-    } @else {
-      <a routerLink="/dashboard" routerLinkActive="is-active" class="navbar__link">Dashboard</a>
-      <a routerLink="/applications" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="is-active" class="navbar__link">Applications</a>
-      <a routerLink="/applications/new" routerLinkActive="is-active" class="navbar__link">Apply</a>
-    }
-  </nav>
-
-  <div class="navbar__user">
-    <div class="navbar__identity">
-      <span class="navbar__role">{{ authService.getRole() }}</span>
-      <span class="navbar__email">{{ authService.getEmail() }}</span>
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-brand">
+      <a [routerLink]="homeLink()" class="logo">
+        <span class="brand-mark"></span><span class="logo-fin">Fin</span><span class="logo-flow">Flow</span>
+      </a>
     </div>
 
-    <button type="button" class="button button-secondary navbar__logout" (click)="logout()">
-      Logout
+    <button class="mobile-toggle" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        @if (isMobileMenuOpen()) {
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        } @else {
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        }
+      </svg>
     </button>
+
+    <div class="nav-links" [class.mobile-open]="isMobileMenuOpen()">
+      @if (authService.loggedIn()) {
+        <div class="main-links">
+          @if (!isAdmin()) {
+            <a routerLink="/dashboard" routerLinkActive="active" (click)="isMobileMenuOpen.set(false)">Dashboard</a>
+            <a routerLink="/applications" routerLinkActive="active" (click)="isMobileMenuOpen.set(false)">Applications</a>
+          } @else {
+            <a routerLink="/admin/applications" routerLinkActive="active" (click)="isMobileMenuOpen.set(false)">Applications</a>
+            <a routerLink="/admin/users" routerLinkActive="active" (click)="isMobileMenuOpen.set(false)">Users</a>
+            <a routerLink="/admin/reports" routerLinkActive="active" (click)="isMobileMenuOpen.set(false)">Reports</a>
+          }
+        </div>
+        
+        <div class="user-menu-container">
+          <button class="bell-button" type="button" aria-label="Notifications" (click)="toggleNotifications()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            @if (notificationService.unreadCount()) {
+              <span>{{ notificationService.unreadCount() }}</span>
+            }
+          </button>
+          @if (isNotificationsOpen()) {
+            <div class="notifications-menu">
+              <div class="dropdown-header">
+                <strong>Notifications</strong>
+                <small>{{ notificationService.unreadCount() }} unread</small>
+              </div>
+              <div class="dropdown-divider"></div>
+              @if (notificationService.mine().length) {
+                @for (notification of notificationService.mine(); track notification.id) {
+                  <button type="button" class="notification-item" [class.unread]="!notification.read" (click)="markNotification(notification.id)">
+                    <span>{{ notification.message }}</span>
+                    <small>{{ notification.createdAt | date:'short' }}</small>
+                  </button>
+                }
+              } @else {
+                <div class="notification-empty">No notifications yet</div>
+              }
+            </div>
+          }
+          <button class="user-pill" (click)="toggleDropdown()" aria-haspopup="true" [attr.aria-expanded]="isDropdownOpen()">
+            <div class="avatar">{{ userInitial() }}</div>
+            <span class="user-email">{{ authService.getEmail() }}</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.rotated]="isDropdownOpen()"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          
+          @if (isDropdownOpen()) {
+            <div class="dropdown-menu">
+              <div class="dropdown-header">
+                <span class="dropdown-email">{{ authService.getEmail() }}</span>
+                <span class="dropdown-role">{{ authService.getRole() }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item profile" routerLink="/profile" (click)="isDropdownOpen.set(false)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                My Profile
+              </a>
+              <a class="dropdown-item profile" href="#help">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 1 1 5.82 1c0 2-3 2-3 4"></path><path d="M12 17h.01"></path></svg>
+                Help & FAQ
+              </a>
+              <button class="dropdown-item" (click)="logout()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Logout
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
   </div>
-</header>
+</nav>

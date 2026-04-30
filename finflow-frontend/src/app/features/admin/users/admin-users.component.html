@@ -1,57 +1,73 @@
-<section class="page-shell section-stack">
+<div class="admin-page">
   <div class="page-header">
     <div>
-      <h1>User Access Control</h1>
-      <p>Manage FinFlow roles for every registered account inside the auth service.</p>
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage user access and roles within FinFlow.</p>
     </div>
   </div>
 
-  <section class="surface-panel table-shell">
+  <div class="glass-card list-container">
+    <div class="filter-bar">
+      <div class="search-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" [formControl]="searchControl" placeholder="Search users by email or ID...">
+      </div>
+    </div>
+
     @if (loading()) {
-      <div class="empty-state">Loading users...</div>
-    } @else if (users().length) {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of users(); track user.id) {
+      <app-loader />
+    } @else if (filteredUsers().length) {
+      <div class="table-responsive">
+        <table class="fin-table">
+          <thead>
             <tr>
-              <td>#{{ user.id }}</td>
-              <td>{{ user.email }}</td>
-              <td>
-                <select
-                  class="field-select compact-select"
-                  [value]="selectedRole(user)"
-                  (change)="updateDraft(user.id, ($any($event.target)).value)"
-                >
-                  <option value="USER">USER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-              </td>
-              <td>
-                <div class="table-actions">
-                  <button
-                    type="button"
-                    class="button button-primary button-sm"
-                    [disabled]="!hasPendingChange(user) || savingUserId() !== null"
-                    (click)="save(user)"
-                  >
-                    {{ savingUserId() === user.id ? 'Saving...' : 'Save' }}
-                  </button>
-                </div>
-              </td>
+              <th>ID</th>
+              <th>Email</th>
+              <th>Role Assignment</th>
+              <th>Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (user of filteredUsers(); track user.id) {
+              <tr>
+                <td class="mono text-muted">#{{ user.id }}</td>
+                <td style="font-weight: 600;">{{ user.email }}</td>
+                <td>
+                  <div class="role-selector">
+                    <select [value]="selectedRole(user)" (change)="updateDraft(user.id, $any($event.target).value)">
+                      <option value="USER">User</option>
+                      <option value="ADMIN">Administrator</option>
+                    </select>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="select-icon"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </td>
+                <td>
+                  <button 
+                    class="btn-primary btn-sm" 
+                    [class.btn-ghost]="!hasPendingChange(user)"
+                    [disabled]="!hasPendingChange(user) || savingUserId() === user.id"
+                    (click)="save(user)">
+                    @if (savingUserId() === user.id) {
+                      Saving...
+                    } @else {
+                      Save Changes
+                    }
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     } @else {
-      <div class="empty-state">No users returned from the auth service.</div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="empty-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <h3>No users found</h3>
+        <p>No users match your current search.</p>
+        @if (searchControl.value) {
+          <button class="btn-ghost mt-3" (click)="searchControl.setValue('')">Clear Search</button>
+        }
+      </div>
     }
-  </section>
-</section>
+  </div>
+</div>

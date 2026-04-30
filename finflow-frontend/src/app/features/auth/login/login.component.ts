@@ -22,6 +22,8 @@ export class LoginComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly submitting = signal(false);
+  protected showPassword = false;
+  private shakeSignal = signal(false);
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
@@ -30,6 +32,7 @@ export class LoginComponent {
   protected submit(): void {
     if (this.form.invalid || this.submitting()) {
       this.form.markAllAsTouched();
+      this.triggerShake();
       return;
     }
 
@@ -47,6 +50,9 @@ export class LoginComponent {
           this.toastService.success('Signed in successfully');
           this.navigateByRole();
         },
+        error: () => {
+          this.triggerShake();
+        }
       });
   }
 
@@ -72,5 +78,19 @@ export class LoginComponent {
   private navigateByRole(): void {
     const target = this.authService.getRole() === 'ADMIN' ? ['/admin/applications'] : ['/dashboard'];
     void this.router.navigate(target);
+  }
+
+  protected togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  protected hasShakeAnimation(): boolean {
+    return this.shakeSignal();
+  }
+
+  private triggerShake(): void {
+    this.shakeSignal.set(false);
+    setTimeout(() => this.shakeSignal.set(true), 10);
+    setTimeout(() => this.shakeSignal.set(false), 410);
   }
 }

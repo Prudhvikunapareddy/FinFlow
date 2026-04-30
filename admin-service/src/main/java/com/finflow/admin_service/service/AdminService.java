@@ -59,6 +59,19 @@ public class AdminService {
         return updated;
     }
 
+    public List<Application> bulkDecision(List<Long> ids, String status) {
+        if (ids == null || ids.isEmpty()) {
+            throw new RuntimeException("At least one application is required");
+        }
+        return ids.stream().map(id -> decision(id, status)).toList();
+    }
+
+    public Application updateNotes(Long id, String notes) {
+        Application app = getById(id);
+        app.setAdminNotes(notes == null || notes.isBlank() ? null : notes.trim());
+        return repository.save(app);
+    }
+
     public String verifyDocument(Long id) {
         Application app = getById(id);
         if (!"SUBMITTED".equals(app.getStatus())) {

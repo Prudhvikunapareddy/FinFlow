@@ -5,6 +5,8 @@ public class ApplicationMessageDTO {
     private String name;
     private String applicantName;
     private Double amount;
+    private String loanType;
+    private Integer tenureMonths;
     private String status;
     private String action;
 
@@ -49,6 +51,22 @@ public class ApplicationMessageDTO {
 
     public void setAmount(Double amount) {
         this.amount = amount;
+    }
+
+    public String getLoanType() {
+        return loanType;
+    }
+
+    public void setLoanType(String loanType) {
+        this.loanType = loanType;
+    }
+
+    public Integer getTenureMonths() {
+        return tenureMonths;
+    }
+
+    public void setTenureMonths(Integer tenureMonths) {
+        this.tenureMonths = tenureMonths;
     }
 
     public String getAction() {

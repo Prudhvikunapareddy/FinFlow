@@ -32,6 +32,8 @@ public class ApplicationService {
 
         LoanApplication app = modelMapper.map(dto, LoanApplication.class);
         app.setName(normalizeName(dto.getName()));
+        app.setLoanType(normalizeLoanType(dto.getLoanType()));
+        app.setTenureMonths(normalizeTenure(dto.getTenureMonths()));
         app.setApplicantName(applicantEmail);
         app.setStatus("DRAFT");
 
@@ -60,6 +62,8 @@ public class ApplicationService {
         ensureDraft(app, "Only draft applications can be updated");
         app.setName(normalizeName(dto.getName()));
         app.setAmount(dto.getAmount());
+        app.setLoanType(normalizeLoanType(dto.getLoanType()));
+        app.setTenureMonths(normalizeTenure(dto.getTenureMonths()));
 
         LoanApplication updated = repository.save(app);
         publishApplicationSnapshot(updated);
@@ -72,6 +76,8 @@ public class ApplicationService {
         ensureDraft(app, "Only draft applications can be updated");
         app.setName(normalizeName(dto.getName()));
         app.setAmount(dto.getAmount());
+        app.setLoanType(normalizeLoanType(dto.getLoanType()));
+        app.setTenureMonths(normalizeTenure(dto.getTenureMonths()));
         LoanApplication updated = repository.save(app);
         publishApplicationSnapshot(updated);
         return modelMapper.map(updated, ApplicationResponseDTO.class);
@@ -169,6 +175,27 @@ public class ApplicationService {
         return name.trim();
     }
 
+    private String normalizeLoanType(String loanType) {
+        if (loanType == null || loanType.isBlank()) {
+            return "PERSONAL";
+        }
+        String normalized = loanType.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("PERSONAL", "HOME", "VEHICLE", "EDUCATION", "BUSINESS").contains(normalized)) {
+            throw new RuntimeException("Invalid loan type: " + loanType);
+        }
+        return normalized;
+    }
+
+    private Integer normalizeTenure(Integer tenureMonths) {
+        if (tenureMonths == null) {
+            return 12;
+        }
+        if (!List.of(6, 12, 24, 36, 48, 60).contains(tenureMonths)) {
+            throw new RuntimeException("Invalid tenure: " + tenureMonths);
+        }
+        return tenureMonths;
+    }
+
     private void ensureDraft(LoanApplication app, String message) {
         if (!"DRAFT".equalsIgnoreCase(app.getStatus())) {
             throw new RuntimeException(message);
@@ -183,6 +210,8 @@ public class ApplicationService {
                         .name(app.getName())
                         .applicantName(app.getApplicantName())
                         .amount(app.getAmount())
+                        .loanType(app.getLoanType())
+                        .tenureMonths(app.getTenureMonths())
                         .status(app.getStatus())
                         .action("UPSERT")
                         .build());

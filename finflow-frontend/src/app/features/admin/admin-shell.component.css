@@ -1,95 +1,100 @@
 .admin-layout {
-  min-height: calc(100vh - var(--navbar-height));
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(59,130,246,0.12), transparent),
+    var(--bg-base);
 }
 
 .admin-sidebar {
   position: fixed;
-  top: var(--navbar-height);
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar-width);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(8, 13, 29, 0.92);
-  backdrop-filter: blur(16px);
+  inset: 0 auto 0 0;
+  width: 240px;
+  padding: 22px 14px;
+  background: rgba(7,11,20,0.9);
+  border-right: 1px solid var(--border-subtle);
+  backdrop-filter: blur(24px);
+  z-index: 900;
 }
 
-.admin-sidebar__inner {
-  display: grid;
-  gap: 22px;
-  height: 100%;
-  padding: 24px 18px;
+.sidebar-header {
+  padding: 0 10px 28px;
 }
 
-.admin-sidebar__heading span,
-.admin-sidebar__label {
-  color: var(--accent);
-  font-size: 0.84rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
 }
 
-.admin-sidebar__heading h2 {
-  margin: 10px 0 8px;
-  font-size: 1.5rem;
-  letter-spacing: -0.04em;
+.brand-mark,
+.logo-fin {
+  color: var(--blue);
 }
 
-.admin-sidebar__heading p,
-.admin-sidebar__report p {
-  margin: 0;
-  color: var(--text-muted);
+.brand-mark {
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, transparent 46%, rgba(255,255,255,0.95) 47% 53%, transparent 54%),
+    linear-gradient(135deg, #2563eb, #0ea5a4);
 }
 
-.admin-sidebar__nav {
+.logo-flow {
+  color: white;
+}
+
+.sidebar-nav {
   display: grid;
   gap: 8px;
 }
 
-.admin-sidebar__link {
+.nav-link {
+  min-height: 48px;
   display: flex;
   align-items: center;
-  min-height: 42px;
+  gap: 12px;
   padding: 0 14px;
-  border-radius: 12px;
-  color: var(--text-muted);
-  font-weight: 600;
-  transition: background 120ms ease, color 120ms ease;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid transparent;
+  color: var(--text-2);
+  font-weight: 800;
+  transition: var(--transition);
 }
 
-.admin-sidebar__link:hover,
-.admin-sidebar__link.is-active {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+.nav-link svg {
+  width: 18px;
+  height: 18px;
 }
 
-.admin-sidebar__report {
-  align-self: end;
-  display: grid;
-  gap: 8px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+.nav-link:hover {
+  background: var(--bg-hover);
+  color: white;
 }
 
-.admin-content {
-  margin-left: var(--sidebar-width);
+.nav-link.active {
+  background: var(--bg-elevated);
+  border-left-color: var(--blue);
+  color: white;
 }
 
-@media (max-width: 960px) {
+.admin-main {
+  min-height: 100vh;
+  margin-left: 240px;
+  padding: 32px;
+}
+
+@media (max-width: 768px) {
   .admin-sidebar {
-    position: static;
-    width: auto;
-    border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transform: translateX(-100%);
   }
 
-  .admin-sidebar__report {
-    align-self: start;
-  }
-
-  .admin-content {
+  .admin-main {
     margin-left: 0;
+    padding: 84px 16px 24px;
   }
 }

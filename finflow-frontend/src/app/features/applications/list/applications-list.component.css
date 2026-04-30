@@ -1,8 +1,137 @@
-.button-sm {
-  min-height: 34px;
-  padding-inline: 14px;
+.breadcrumb {
+  color: var(--text-2);
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 8px;
 }
 
-.list-empty-action {
-  margin-top: 16px;
+.breadcrumb a,
+.view-link {
+  color: #60a5fa;
+  font-weight: 800;
+}
+
+.list-container {
+  overflow: hidden;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  gap: 16px;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.search-input {
+  position: relative;
+}
+
+.search-input svg {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-3);
+}
+
+.search-input input {
+  padding-left: 42px;
+}
+
+.status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.status-pills button,
+.tiny-submit {
+  min-height: 34px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.status-pills button.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+}
+
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loan-meta {
+  margin-top: 5px;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-timeline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.status-timeline span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(148,163,184,0.1);
+  color: var(--text-2);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.status-timeline span.done {
+  background: rgba(16,185,129,0.14);
+  color: #9ee6c8;
+}
+
+.tiny-submit {
+  color: #93c5fd;
+  border-color: rgba(59,130,246,0.3);
+}
+
+.trash-button {
+  min-height: 34px;
+  width: 34px;
+  padding: 0;
+  background: transparent;
+  color: #f87171;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  color: var(--text-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.pagination div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .filter-bar,
+  .pagination {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

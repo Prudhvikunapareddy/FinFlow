@@ -1,63 +1,94 @@
-<section class="page-shell section-stack">
+<div class="admin-page">
   <div class="page-header">
     <div>
-      <h1>Admin Applications</h1>
-      <p>Review every application currently moving through the FinFlow decision pipeline.</p>
-    </div>
-
-    <div class="filter-bar">
-      <label class="field-label" for="admin-status-filter">Filter by status</label>
-      <select
-        id="admin-status-filter"
-        class="field-select"
-        [value]="filter()"
-        (change)="onFilterChange(($any($event.target)).value)"
-      >
-        @for (option of filterOptions; track option) {
-          <option [value]="option">{{ option === 'ALL' ? 'All statuses' : option.replaceAll('_', ' ') }}</option>
-        }
-      </select>
+      <h1 class="page-title">Loan Applications</h1>
+      <p class="page-subtitle">Review, approve, and manage all customer loan applications.</p>
     </div>
   </div>
 
-  <section class="surface-panel table-shell">
+  <div class="stats-grid">
+    <div class="stat-card glass-card"><div class="stat-icon icon-blue">A</div><span class="stat-value">{{ summary().total }}</span><span class="stat-label">Total Applications</span></div>
+    <div class="stat-card glass-card"><div class="stat-icon icon-yellow">P</div><span class="stat-value text-yellow">{{ summary().pending }}</span><span class="stat-label">Pending Review</span></div>
+    <div class="stat-card glass-card"><div class="stat-icon icon-green">OK</div><span class="stat-value text-green">{{ summary().approved }}</span><span class="stat-label">Approved</span></div>
+    <div class="stat-card glass-card"><div class="stat-icon icon-red">R</div><span class="stat-value text-red">{{ summary().rejected }}</span><span class="stat-label">Rejected</span></div>
+  </div>
+
+  <div class="glass-card list-container">
+    <div class="filter-bar" [formGroup]="filterForm">
+      <div class="search-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        <input type="text" [formControl]="searchControl" placeholder="Search by name or email...">
+      </div>
+      <div class="status-filter">
+        <select [formControl]="statusControl">
+          <option value="ALL">ALL</option>
+          <option value="SUBMITTED">PENDING</option>
+          <option value="APPROVED">APPROVED</option>
+          <option value="REJECTED">REJECTED</option>
+        </select>
+      </div>
+      <select formControlName="loanType">
+        <option value="ALL">All loan types</option>
+        <option value="PERSONAL">Personal Loan</option>
+        <option value="HOME">Home Loan</option>
+        <option value="VEHICLE">Vehicle Loan</option>
+        <option value="EDUCATION">Education Loan</option>
+        <option value="BUSINESS">Business Loan</option>
+      </select>
+      <input type="number" formControlName="minAmount" placeholder="Min amount">
+      <input type="number" formControlName="maxAmount" placeholder="Max amount">
+      <input type="date" formControlName="startDate">
+      <input type="date" formControlName="endDate">
+      <button type="button" class="btn-ghost" (click)="exportCsv()">Export CSV</button>
+    </div>
+
+    <div class="bulk-bar">
+      <span>{{ selectedIds().size }} selected</span>
+      <button type="button" class="approve-btn" (click)="bulkDecision('APPROVED')" [disabled]="!selectedIds().size || bulkProcessing()">Bulk Approve</button>
+      <button type="button" class="reject-btn" (click)="bulkDecision('REJECTED')" [disabled]="!selectedIds().size || bulkProcessing()">Bulk Reject</button>
+    </div>
+
     @if (loading()) {
-      <div class="empty-state">Loading admin applications...</div>
+      <app-loader />
     } @else if (filteredApplications().length) {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Loan Name</th>
-            <th>Applicant</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (application of filteredApplications(); track application.id) {
-            <tr>
-              <td>#{{ application.id }}</td>
-              <td>{{ application.name }}</td>
-              <td>{{ application.applicantName }}</td>
-              <td>{{ (application.amount ?? 0) | currencyInr }}</td>
-              <td>
-                <app-status-badge [status]="application.status" />
-              </td>
-              <td>
-                <div class="table-actions">
-                  <a class="button button-secondary button-sm" [routerLink]="['/admin/applications', application.id]">
-                    Review
-                  </a>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="fin-table">
+          <thead><tr><th></th><th>#</th><th>Applicant</th><th>Type</th><th>Amount</th><th>Status</th><th>Submission Date</th><th>Actions</th></tr></thead>
+          <tbody>
+            @for (app of filteredApplications(); track app.id) {
+              <tr [routerLink]="['/admin/applications', app.id]">
+                <td><input type="checkbox" [checked]="selectedIds().has(app.id)" (click)="$event.stopPropagation()" (change)="toggleSelection($event, app.id)"></td>
+                <td class="id-cell">#{{ app.id.toString().padStart(3, '0') }}</td>
+                <td><strong>{{ displayApplicantName(app.applicantName) }}</strong><small>{{ app.applicantName || 'No email on record' }} · {{ app.name }}</small></td>
+                <td>{{ app.loanType || 'PERSONAL' }}</td>
+                <td class="amount">{{ (app.amount ?? 0) | currencyInr }}</td>
+                <td><app-status-badge [status]="app.status" /></td>
+                <td class="text-muted">{{ app.submittedAt ? (app.submittedAt | date:'d MMM y, h:mm a') : '—' }}</td>
+                <td class="decision-cell">
+                  <button type="button" class="approve-btn" (click)="openDecision($event, app, 'APPROVED')" [disabled]="app.status === 'APPROVED' || app.status === 'REJECTED' || decidingId() === app.id">Approve</button>
+                  <button type="button" class="reject-btn" (click)="openDecision($event, app, 'REJECTED')" [disabled]="app.status === 'APPROVED' || app.status === 'REJECTED' || decidingId() === app.id">Reject</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     } @else {
-      <div class="empty-state">No applications match the selected filter.</div>
+      <div class="empty-state">
+        <div class="empty-icon">📄</div>
+        <h3>No applications found</h3>
+        <p>No applications match your current filters.</p>
+      </div>
     }
-  </section>
-</section>
+  </div>
+
+  <app-confirm-dialog
+    [open]="pendingDecision() !== null"
+    [title]="pendingDecision()?.status === 'APPROVED' ? 'Approve Application' : 'Reject Application'"
+    [message]="decisionMessage()"
+    [confirmLabel]="pendingDecision()?.status === 'APPROVED' ? 'Approve' : 'Reject'"
+    [tone]="pendingDecision()?.status === 'REJECTED' ? 'danger' : 'default'"
+    (confirmed)="confirmDecision()"
+    (cancelled)="pendingDecision.set(null)"
+  />
+</div>

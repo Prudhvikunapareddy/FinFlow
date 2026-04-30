@@ -1,54 +1,94 @@
-<section class="page-shell section-stack">
-  <div class="page-header">
+<div class="page-wrapper container">
+  <header class="page-header">
     <div>
-      <h1>My Applications</h1>
-      <p>Monitor every draft, submission, and final decision tied to your account.</p>
+      <div class="breadcrumb"><a routerLink="/dashboard">Home</a><span>/</span><span>Applications</span></div>
+      <h1 class="page-title">My Applications</h1>
+      <p class="page-subtitle">Search, submit, and track your loan applications.</p>
+    </div>
+    <a routerLink="/applications/new" class="btn-primary">New Application</a>
+  </header>
+
+  <section class="glass-card list-container">
+    <div class="filter-bar">
+      <div class="search-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+        <input type="text" [formControl]="searchControl" placeholder="Search by loan name...">
+      </div>
+      <div class="status-pills">
+        @for (status of ['ALL', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']; track status) {
+          <button type="button" [class.active]="statusControl.value === status" (click)="setStatus(status)">{{ status }}</button>
+        }
+      </div>
     </div>
 
-    <a routerLink="/applications/new" class="button button-primary">New Application</a>
-  </div>
-
-  <section class="surface-panel table-shell">
     @if (loading()) {
-      <div class="empty-state">Loading applications...</div>
-    } @else if (applications().length) {
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (application of applications(); track application.id) {
+      <app-loader />
+    } @else if (filteredApplications().length) {
+      <div class="table-responsive">
+        <table class="fin-table">
+          <thead>
             <tr>
-              <td>#{{ application.id }}</td>
-              <td>{{ application.name }}</td>
-              <td>{{ application.amount | currencyInr }}</td>
-              <td>
-                <app-status-badge [status]="application.status" />
-              </td>
-              <td>
-                <div class="table-actions">
-                  <a class="button button-secondary button-sm" [routerLink]="['/applications', application.id]">
-                    {{ application.status === 'DRAFT' ? 'Continue' : 'View' }}
-                  </a>
-                </div>
-              </td>
+              <th>#</th>
+              <th>Loan Name</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (app of pagedApplications(); track app.id) {
+              <tr [routerLink]="['/applications', app.id]">
+                <td class="id-cell">#{{ app.id.toString().padStart(3, '0') }}</td>
+                <td>
+                  <strong>{{ app.name }}</strong>
+                  <div class="loan-meta">{{ app.loanType || 'PERSONAL' }} · {{ app.tenureMonths || 12 }} months</div>
+                  <div class="status-timeline">
+                    @for (step of timelineSteps; track step; let index = $index) {
+                      <span [class.done]="index <= timelineIndex(app)">{{ step }}</span>
+                    }
+                  </div>
+                </td>
+                <td class="amount">{{ app.amount | currencyInr }}</td>
+                <td><app-status-badge [status]="app.status" /></td>
+                <td class="text-muted">Application #{{ app.id }}</td>
+                <td class="action-cell">
+                  <a [routerLink]="['/applications', app.id]" class="view-link" (click)="$event.stopPropagation()">View</a>
+                  @if (app.status === 'DRAFT') {
+                    <button type="button" class="tiny-submit" (click)="submitDraft($event, app)" [disabled]="busyId() === app.id">Submit</button>
+                  }
+                  <button type="button" class="trash-button" aria-label="Delete application" (click)="requestDelete($event, app)">🗑</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="pagination">
+        <span>Showing {{ ((page() - 1) * pageSize) + 1 }}-{{ ((page() - 1) * pageSize) + pagedApplications().length }} of {{ filteredApplications().length }} applications</span>
+        <div>
+          <button type="button" class="btn-ghost" (click)="prevPage()" [disabled]="page() === 1">←</button>
+          <span>Page {{ page() }} of {{ totalPages() }}</span>
+          <button type="button" class="btn-ghost" (click)="nextPage()" [disabled]="page() === totalPages()">→</button>
+        </div>
+      </footer>
     } @else {
       <div class="empty-state">
-        No applications found.
-        <div class="list-empty-action">
-          <a routerLink="/applications/new" class="button button-primary">Create draft</a>
-        </div>
+        <div class="empty-icon">📄</div>
+        <h3>No applications found</h3>
+        <p>Start your loan journey today.</p>
+        <a routerLink="/applications/new" class="btn-primary mt-3">Apply Now</a>
       </div>
     }
   </section>
-</section>
+
+  <app-confirm-dialog
+    [open]="pendingDelete() !== null"
+    title="Delete Application"
+    [message]="'Delete ' + (pendingDelete()?.name ?? 'this application') + '?'"
+    confirmLabel="Delete"
+    tone="danger"
+    (confirmed)="confirmDelete()"
+    (cancelled)="pendingDelete.set(null)"
+  />
+</div>

@@ -1,38 +1,149 @@
-<div class="auth-shell">
-  <div class="auth-card">
-    <div class="auth-brand">
-      <span>New Account</span>
-      <h1>Create your FinFlow access</h1>
-      <p>Start drafting loan applications and track every decision through one workflow.</p>
+<main class="auth-page signup-page">
+  <section class="auth-hero">
+    <a routerLink="/login" class="auth-logo">
+      <svg class="auth-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--blue); margin-right: 8px; width: 24px; height: 24px;">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+      </svg>
+      <b>Fin</b> Flow
+    </a>
+
+    <div class="signup-visual" aria-hidden="true">
+      <div class="phone phone-back">
+        <span></span>
+        <div></div>
+        <p></p>
+        <p></p>
+        <p></p>
+      </div>
+      <div class="phone phone-front">
+        <span></span>
+        <strong>Approved</strong>
+        <small>Loan ready</small>
+        <div class="phone-card">
+          <b>Personal Loan</b>
+          <em>Rs. 2,50,000</em>
+        </div>
+      </div>
     </div>
 
-    <form class="section-stack" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="field-group">
-        <label class="field-label" for="signup-email">Email</label>
-        <input id="signup-email" class="field-control" type="email" formControlName="email" autocomplete="email" />
-        <div class="field-error">{{ hasError('email') ? getError('email') : '' }}</div>
+    <div class="hero-copy">
+      <h1>Apply & track your loan in one place.</h1>
+      <p>Create your account once, then manage applications, documents, and decisions from one dashboard.</p>
+      <div class="feature-pills trust-list">
+        <span>No hidden charges</span>
+        <span>Flexible repayment</span>
+        <span>Paperless process</span>
+      </div>
+    </div>
+    <div class="testimonial">
+      <div class="rating">Trusted digital lending flow</div>
+      <p>"The cleanest online lending flow I have used."</p>
+      <strong>Ananya M., Pune</strong>
+    </div>
+  </section>
+
+  <section class="auth-panel">
+    <form class="auth-card" [class.animate-shake]="hasShakeAnimation()" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="auth-header">
+        <h2>Create your account</h2>
+        <p>Start your FinFlow loan journey</p>
       </div>
 
-      <div class="field-group">
-        <label class="field-label" for="signup-password">Password</label>
-        <input
-          id="signup-password"
-          class="field-control"
-          type="password"
-          formControlName="password"
-          autocomplete="new-password"
-        />
-        <div class="field-error">{{ hasError('password') ? getError('password') : '' }}</div>
+      <div class="name-grid">
+        <div class="form-group has-icon" [class.has-error]="hasError('firstName')">
+          <label for="firstName">First Name</label>
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <input type="text" id="firstName" formControlName="firstName" placeholder="First Name" autocomplete="given-name">
+          @if (hasError('firstName')) { <span class="error-message">Check: {{ getError('firstName') }}</span> }
+        </div>
+
+        <div class="form-group has-icon" [class.has-error]="hasError('lastName')">
+          <label for="lastName">Last Name</label>
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <input type="text" id="lastName" formControlName="lastName" placeholder="Last Name" autocomplete="family-name">
+          @if (hasError('lastName')) { <span class="error-message">Check: {{ getError('lastName') }}</span> }
+        </div>
       </div>
 
-      <button type="submit" class="button button-primary auth-submit" [disabled]="submitting()">
-        {{ submitting() ? 'Creating Account...' : 'Create Account' }}
+      <div class="name-grid">
+        <div class="form-group has-icon" [class.has-error]="hasError('dateOfBirth')">
+          <label for="dateOfBirth">Date of Birth</label>
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4"></path><path d="M8 2v4"></path><path d="M3 10h18"></path></svg>
+          <input type="date" id="dateOfBirth" formControlName="dateOfBirth" [max]="maxBirthDate" autocomplete="bday">
+          @if (hasError('dateOfBirth')) { <span class="error-message">Check: {{ getError('dateOfBirth') }}</span> }
+        </div>
+
+        <div class="form-group has-icon" [class.has-error]="hasError('phoneNumber')">
+          <label for="phoneNumber">Phone Number</label>
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.35 1.89.7 2.78a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.3-1.27a2 2 0 0 1 2.11-.45c.89.35 1.82.57 2.78.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <input type="tel" id="phoneNumber" formControlName="phoneNumber" placeholder="Phone Number" maxlength="10" inputmode="numeric" autocomplete="tel">
+          @if (hasError('phoneNumber')) { <span class="error-message">Check: {{ getError('phoneNumber') }}</span> }
+        </div>
+      </div>
+
+      <div class="form-group has-icon" [class.has-error]="hasError('email')">
+        <label for="email">Email address</label>
+        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>
+        <input type="email" id="email" formControlName="email" placeholder="Email address" autocomplete="email">
+        @if (hasError('email')) { <span class="error-message">Check: {{ getError('email') }}</span> }
+      </div>
+
+      <div class="form-group has-icon" [class.has-error]="hasError('password')">
+        <label for="password">Password</label>
+        <div class="password-wrapper">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <input [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password" placeholder="Password" autocomplete="new-password">
+          <button type="button" class="toggle-password" (click)="togglePassword()">@if (showPassword) { Hide } @else { Show }</button>
+        </div>
+        <div class="strength-meter" [attr.data-strength]="passwordStrength()">
+          <span [class.active]="passwordStrength() >= 1"></span>
+          <span [class.active]="passwordStrength() >= 2"></span>
+          <span [class.active]="passwordStrength() >= 3"></span>
+          <span [class.active]="passwordStrength() >= 4"></span>
+          <b>{{ passwordStrengthLabel() }}</b>
+        </div>
+        <ul class="password-checklist">
+          <li [class.met]="passwordCriteria().minLength">8+ chars</li>
+          <li [class.met]="passwordCriteria().number">1 number</li>
+          <li [class.met]="passwordCriteria().uppercase">1 uppercase</li>
+          <li [class.met]="passwordCriteria().special">1 special character</li>
+        </ul>
+        @if (hasError('password')) { <span class="error-message">Check: {{ getError('password') }}</span> }
+      </div>
+
+      <div class="form-group has-icon" [class.has-error]="hasError('confirmPassword')">
+        <label for="confirmPassword">Confirm password</label>
+        <div class="password-wrapper">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"></path></svg>
+          <input [type]="showConfirmPassword ? 'text' : 'password'" id="confirmPassword" formControlName="confirmPassword" placeholder="Confirm password" autocomplete="new-password">
+          <button type="button" class="toggle-password" (click)="toggleConfirmPassword()">@if (showConfirmPassword) { Hide } @else { Show }</button>
+        </div>
+        @if (hasError('confirmPassword')) { <span class="error-message">Check: {{ getError('confirmPassword') }}</span> }
+      </div>
+
+      <div class="form-group has-icon">
+        <label for="referralCode">Have a referral code? (Optional)</label>
+        <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41 11 3.83A2 2 0 0 0 9.59 3H4a1 1 0 0 0-1 1v5.59A2 2 0 0 0 3.59 11l9.59 9.59a2 2 0 0 0 2.82 0L20.59 16a2 2 0 0 0 0-2.59Z"></path><path d="M7 7h.01"></path></svg>
+        <input type="text" id="referralCode" formControlName="referralCode" placeholder="Referral code" autocomplete="off">
+      </div>
+
+      <label class="terms-row" [class.has-error]="hasError('terms')">
+        <input type="checkbox" formControlName="terms">
+        <span class="checkbox-box"></span>
+        <span>I agree to the Terms of Service and Privacy Policy</span>
+      </label>
+      @if (hasError('terms')) { <span class="error-message">Check: {{ getError('terms') }}</span> }
+
+      <button type="submit" class="btn-primary auth-submit" [class.tone-weak]="submitTone() === 'weak'" [class.tone-medium]="submitTone() === 'medium'" [class.tone-strong]="submitTone() === 'strong'" [disabled]="submitting() || form.invalid">
+        @if (submitting()) {
+          <span class="spinner"></span> Creating account
+        } @else {
+          <span class="button-icon">+</span> Create account
+        }
       </button>
-    </form>
 
-    <p class="auth-footnote">
-      Already registered?
-      <a routerLink="/login">Return to sign in</a>
-    </p>
-  </div>
-</div>
+      <div class="divider"><span>or</span></div>
+      <p class="auth-footer">Already have an account? <a routerLink="/login">Sign in</a></p>
+    </form>
+  </section>
+</main>

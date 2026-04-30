@@ -10,6 +10,8 @@ public class ApplicationRequestDTO {
     @NotNull(message = "Amount is required")
     @Min(value = 1000, message = "Amount must be greater than 1000")
     private Double amount;
+    private String loanType;
+    private Integer tenureMonths;
 
     public ApplicationRequestDTO() {
     }
@@ -28,5 +30,21 @@ public class ApplicationRequestDTO {
 
     public void setAmount(Double amount) {
         this.amount = amount;
+    }
+
+    public String getLoanType() {
+        return loanType;
+    }
+
+    public void setLoanType(String loanType) {
+        this.loanType = loanType;
+    }
+
+    public Integer getTenureMonths() {
+        return tenureMonths;
+    }
+
+    public void setTenureMonths(Integer tenureMonths) {
+        this.tenureMonths = tenureMonths;
     }
 }

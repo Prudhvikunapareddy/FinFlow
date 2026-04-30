@@ -46,21 +46,31 @@ class ApplicationServiceTest {
     @Test
     void createShouldSaveDraftApplicationForAuthenticatedUser() {
         ApplicationRequestDTO request = new ApplicationRequestDTO();
+        request.setName("Personal loan");
         request.setAmount(5000.0);
+        request.setLoanType("PERSONAL");
+        request.setTenureMonths(12);
 
         LoanApplication mapped = new LoanApplication();
+        mapped.setName("Personal loan");
         mapped.setAmount(5000.0);
 
         LoanApplication saved = new LoanApplication();
         saved.setId(1L);
+        saved.setName("Personal loan");
         saved.setApplicantName("user@finflow.com");
         saved.setAmount(5000.0);
+        saved.setLoanType("PERSONAL");
+        saved.setTenureMonths(12);
         saved.setStatus("DRAFT");
 
         ApplicationResponseDTO response = new ApplicationResponseDTO();
         response.setId(1L);
+        response.setName("Personal loan");
         response.setApplicantName("user@finflow.com");
         response.setAmount(5000.0);
+        response.setLoanType("PERSONAL");
+        response.setTenureMonths(12);
         response.setStatus("DRAFT");
 
         when(modelMapper.map(request, LoanApplication.class)).thenReturn(mapped);
@@ -118,11 +128,16 @@ class ApplicationServiceTest {
     @Test
     void updateShouldChangeAmountAndReturnMappedResponse() {
         ApplicationRequestDTO request = new ApplicationRequestDTO();
+        request.setName("Updated loan");
         request.setAmount(12000.0);
+        request.setLoanType("HOME");
+        request.setTenureMonths(24);
 
         LoanApplication existing = new LoanApplication();
         existing.setId(7L);
+        existing.setName("Old loan");
         existing.setAmount(4000.0);
+        existing.setStatus("DRAFT");
 
         LoanApplication updated = new LoanApplication();
         updated.setId(7L);
@@ -146,6 +161,7 @@ class ApplicationServiceTest {
     void deleteShouldRemoveExistingApplication() {
         LoanApplication existing = new LoanApplication();
         existing.setId(4L);
+        existing.setStatus("DRAFT");
 
         when(repository.findById(4L)).thenReturn(Optional.of(existing));
 
@@ -197,12 +213,20 @@ class ApplicationServiceTest {
     void submitShouldUpdateStatusAndPublishMessage() {
         LoanApplication existing = new LoanApplication();
         existing.setId(9L);
+        existing.setName("Personal loan");
         existing.setApplicantName("user@finflow.com");
+        existing.setAmount(5000.0);
+        existing.setLoanType("PERSONAL");
+        existing.setTenureMonths(12);
         existing.setStatus("DRAFT");
 
         LoanApplication updated = new LoanApplication();
         updated.setId(9L);
+        updated.setName("Personal loan");
         updated.setApplicantName("user@finflow.com");
+        updated.setAmount(5000.0);
+        updated.setLoanType("PERSONAL");
+        updated.setTenureMonths(12);
         updated.setStatus("SUBMITTED");
 
         ApplicationResponseDTO response = new ApplicationResponseDTO();
@@ -221,7 +245,8 @@ class ApplicationServiceTest {
         ApplicationMessageDTO message = messageCaptor.getValue();
         assertNotNull(message);
         assertEquals(9L, message.getId());
-        assertEquals("user@finflow.com", message.getName());
+        assertEquals("Personal loan", message.getName());
+        assertEquals("user@finflow.com", message.getApplicantName());
         assertEquals("SUBMITTED", message.getStatus());
         assertEquals("SUBMITTED", existing.getStatus());
         assertEquals("SUBMITTED", result.getStatus());
