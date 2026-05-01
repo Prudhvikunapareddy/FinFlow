@@ -8,6 +8,7 @@ public class ApplicationResponseDTO {
     private String loanType;
     private Integer tenureMonths;
     private String status;
+    private String adminNotes;
 
     public ApplicationResponseDTO() {
     }
@@ -66,5 +67,13 @@ public class ApplicationResponseDTO {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
     }
 }

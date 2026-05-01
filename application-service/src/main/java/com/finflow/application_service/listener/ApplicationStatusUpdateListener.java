@@ -22,7 +22,12 @@ public class ApplicationStatusUpdateListener {
         LoanApplication app = repository.findById(message.getId())
                 .orElseThrow(() -> new RuntimeException("Application not found for status sync: " + message.getId()));
 
-        app.setStatus(message.getStatus());
+        if (message.getStatus() != null) {
+            app.setStatus(message.getStatus());
+        }
+        if (Boolean.TRUE.equals(message.getAdminNotesUpdated())) {
+            app.setAdminNotes(message.getAdminNotes());
+        }
         repository.save(app);
     }
 }

@@ -1,0 +1,174 @@
+name: FinFlow CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "22"
+  REGISTRY: ghcr.io
+
+jobs:
+  backend-ci:
+    name: Backend CI - ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - admin-service
+          - api-gateway
+          - application-service
+          - auth-service
+          - config-server
+          - document-service
+          - service-registry
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Test and package ${{ matrix.service }}
+        working-directory: ${{ matrix.service }}
+        run: mvn -B -ntp verify
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/surefire-reports
+          if-no-files-found: ignore
+
+      - name: Upload packaged jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/*.jar
+          if-no-files-found: error
+
+  frontend-ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: finflow-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: finflow-frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: finflow-frontend
+        run: npm run build
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: finflow-frontend-dist
+          path: finflow-frontend/dist
+          if-no-files-found: error
+
+  docker-build-push:
+    name: Build and publish image - ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs:
+      - backend-ci
+      - frontend-ci
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: admin-service
+            context: admin-service
+          - image: api-gateway
+            context: api-gateway
+          - image: application-service
+            context: application-service
+          - image: auth-service
+            context: auth-service
+          - image: config-server
+            context: config-server
+          - image: document-service
+            context: document-service
+          - image: service-registry
+            context: service-registry
+          - image: frontend
+            context: finflow-frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set image name
+        id: image
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "name=${REGISTRY}/${owner}/finflow-${{ matrix.image }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

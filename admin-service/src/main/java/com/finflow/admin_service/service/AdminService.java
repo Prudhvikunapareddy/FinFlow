@@ -69,7 +69,9 @@ public class AdminService {
     public Application updateNotes(Long id, String notes) {
         Application app = getById(id);
         app.setAdminNotes(notes == null || notes.isBlank() ? null : notes.trim());
-        return repository.save(app);
+        Application updated = repository.save(app);
+        publishNotesUpdate(updated.getId(), updated.getAdminNotes());
+        return updated;
     }
 
     public String verifyDocument(Long id) {
@@ -173,5 +175,11 @@ public class AdminService {
         rabbitTemplate.convertAndSend(
                 RabbitConfig.STATUS_UPDATE_QUEUE,
                 new ApplicationStatusUpdateDTO(id, status));
+    }
+
+    private void publishNotesUpdate(Long id, String adminNotes) {
+        rabbitTemplate.convertAndSend(
+                RabbitConfig.STATUS_UPDATE_QUEUE,
+                ApplicationStatusUpdateDTO.notesUpdate(id, adminNotes));
     }
 }

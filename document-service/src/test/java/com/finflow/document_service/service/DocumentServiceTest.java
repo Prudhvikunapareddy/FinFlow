@@ -3,6 +3,7 @@ package com.finflow.document_service.service;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -137,5 +138,30 @@ class DocumentServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("salary-slip.pdf", result.get(0).getFileName());
+    }
+
+    @Test
+    void hasDocumentsShouldDelegateToRepository() {
+        when(repository.existsByApplicationId(42L)).thenReturn(true);
+
+        assertEquals(true, documentService.hasDocuments(42L));
+    }
+
+    @Test
+    void saveShouldRejectInvalidDocumentType() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "bad.txt", "text/plain", "x".getBytes());
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> documentService.save(file, 99L, "passport", "user@finflow.com", "ADMIN"));
+
+        assertEquals("Invalid document type: passport", exception.getMessage());
+    }
+
+    @Test
+    void getByApplicationShouldRejectBlankEmailForNonAdmin() {
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> documentService.getByApplication(42L, " ", "USER"));
+
+        assertEquals("Authenticated user email is required", exception.getMessage());
     }
 }

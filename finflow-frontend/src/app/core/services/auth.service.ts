@@ -158,6 +158,9 @@ export class AuthService {
         .replace(/_/g, '/')
         .padEnd(Math.ceil(segments[1].length / 4) * 4, '=');
       const payload = JSON.parse(atob(payloadSegment)) as JwtPayload;
+      if (payload.exp && payload.exp * 1000 <= Date.now()) {
+        return null;
+      }
 
       return {
         token,

@@ -18,6 +18,7 @@ public class LoanApplication {
     private String loanType;
     private Integer tenureMonths;
     private String status;
+    private String adminNotes;
 
     public LoanApplication() {
     }
@@ -76,5 +77,13 @@ public class LoanApplication {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAdminNotes() {
+        return adminNotes;
+    }
+
+    public void setAdminNotes(String adminNotes) {
+        this.adminNotes = adminNotes;
     }
 }

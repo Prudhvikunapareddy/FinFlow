@@ -3,6 +3,7 @@ package com.finflow.auth_service.CONTROLLER;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,17 +37,32 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
-    public UserResponse profile(@RequestHeader("X-User-Email") String email) {
-        return authService.getProfile(email);
+    public UserResponse profile(@RequestHeader(value = "X-User-Email", required = false) String email,
+                                Authentication authentication) {
+        return authService.getProfile(resolveEmail(email, authentication));
     }
 
     @PutMapping("/profile")
-    public UserResponse updateProfile(@RequestHeader("X-User-Email") String email, @Valid @RequestBody ProfileUpdateRequest request) {
-        return authService.updateProfile(email, request);
+    public UserResponse updateProfile(@RequestHeader(value = "X-User-Email", required = false) String email,
+                                      Authentication authentication,
+                                      @Valid @RequestBody ProfileUpdateRequest request) {
+        return authService.updateProfile(resolveEmail(email, authentication), request);
     }
 
     @PutMapping("/password")
-    public String changePassword(@RequestHeader("X-User-Email") String email, @Valid @RequestBody ChangePasswordRequest request) {
-        return authService.changePassword(email, request);
+    public String changePassword(@RequestHeader(value = "X-User-Email", required = false) String email,
+                                 Authentication authentication,
+                                 @Valid @RequestBody ChangePasswordRequest request) {
+        return authService.changePassword(resolveEmail(email, authentication), request);
+    }
+
+    private String resolveEmail(String headerEmail, Authentication authentication) {
+        if (headerEmail != null && !headerEmail.isBlank()) {
+            return headerEmail;
+        }
+        if (authentication != null && authentication.getName() != null && !authentication.getName().isBlank()) {
+            return authentication.getName();
+        }
+        throw new RuntimeException("Authenticated user email is required");
     }
 }

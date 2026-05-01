@@ -310,4 +310,103 @@ class ApplicationServiceTest {
 
         assertEquals("Unauthorized", exception.getMessage());
     }
+
+    @Test
+    void createShouldDefaultLoanTypeAndTenure() {
+        ApplicationRequestDTO request = new ApplicationRequestDTO();
+        request.setName(" Starter loan ");
+        request.setAmount(2500.0);
+
+        LoanApplication mapped = new LoanApplication();
+        LoanApplication saved = new LoanApplication();
+        saved.setId(30L);
+        ApplicationResponseDTO response = new ApplicationResponseDTO();
+        response.setId(30L);
+
+        when(modelMapper.map(request, LoanApplication.class)).thenReturn(mapped);
+        when(repository.save(mapped)).thenReturn(saved);
+        when(modelMapper.map(saved, ApplicationResponseDTO.class)).thenReturn(response);
+
+        applicationService.create(request, "USER@FINFLOW.COM");
+
+        assertEquals("Starter loan", mapped.getName());
+        assertEquals("PERSONAL", mapped.getLoanType());
+        assertEquals(12, mapped.getTenureMonths());
+        assertEquals("user@finflow.com", mapped.getApplicantName());
+    }
+
+    @Test
+    void updateForUserShouldPersistOwnedDraftApplication() {
+        ApplicationRequestDTO request = new ApplicationRequestDTO();
+        request.setName("Business loan");
+        request.setAmount(8000.0);
+        request.setLoanType("BUSINESS");
+        request.setTenureMonths(36);
+
+        LoanApplication existing = new LoanApplication();
+        existing.setId(31L);
+        existing.setApplicantName("user@finflow.com");
+        existing.setStatus("DRAFT");
+
+        LoanApplication updated = new LoanApplication();
+        updated.setId(31L);
+        updated.setAmount(8000.0);
+
+        ApplicationResponseDTO response = new ApplicationResponseDTO();
+        response.setId(31L);
+        response.setAmount(8000.0);
+
+        when(repository.findById(31L)).thenReturn(Optional.of(existing));
+        when(repository.save(existing)).thenReturn(updated);
+        when(modelMapper.map(updated, ApplicationResponseDTO.class)).thenReturn(response);
+
+        ApplicationResponseDTO result = applicationService.updateForUser(31L, request, "user@finflow.com");
+
+        assertEquals("Business loan", existing.getName());
+        assertEquals("BUSINESS", existing.getLoanType());
+        assertEquals(36, existing.getTenureMonths());
+        assertEquals(8000.0, result.getAmount());
+    }
+
+    @Test
+    void deleteForUserShouldRemoveOwnedDraftApplication() {
+        LoanApplication existing = new LoanApplication();
+        existing.setId(32L);
+        existing.setApplicantName("user@finflow.com");
+        existing.setStatus("DRAFT");
+
+        when(repository.findById(32L)).thenReturn(Optional.of(existing));
+
+        applicationService.deleteForUser(32L, "user@finflow.com");
+
+        verify(repository).delete(existing);
+    }
+
+    @Test
+    void updateShouldRejectInvalidLoanType() {
+        ApplicationRequestDTO request = new ApplicationRequestDTO();
+        request.setName("Bad loan");
+        request.setLoanType("crypto");
+
+        LoanApplication existing = new LoanApplication();
+        existing.setId(33L);
+        existing.setStatus("DRAFT");
+
+        when(repository.findById(33L)).thenReturn(Optional.of(existing));
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> applicationService.update(33L, request));
+
+        assertEquals("Invalid loan type: crypto", exception.getMessage());
+    }
+
+    @Test
+    void getApplicationForInternalUseShouldReturnApplication() {
+        LoanApplication application = new LoanApplication();
+        application.setId(34L);
+
+        when(repository.findById(34L)).thenReturn(Optional.of(application));
+
+        assertEquals(34L, applicationService.getApplicationForInternalUse(34L).getId());
+    }
 }

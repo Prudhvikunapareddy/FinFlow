@@ -18,9 +18,13 @@
     <description>Centralized configuration server for FinFlow microservices</description>
 
     <properties>
-        <java.version>21</java.version>
-        <spring-cloud.version>2025.0.1</spring-cloud.version>
-    </properties>
+		<java.version>21</java.version>
+		<spring-cloud.version>2025.0.1</spring-cloud.version>
+		<sonar.projectKey>finflow-config-server</sonar.projectKey>
+		<sonar.projectName>FinFlow Config Server</sonar.projectName>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.exclusions>**/*Application.java</sonar.coverage.exclusions>
+	</properties>
 
     <dependencies>
         <dependency>
@@ -62,11 +66,30 @@
         </dependencies>
     </dependencyManagement>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.14</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>

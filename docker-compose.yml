@@ -34,6 +34,50 @@ services:
     ports:
       - "9412:9411"
 
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: finflow-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: finflow-sonar-scanner
+    profiles:
+      - tools
+    depends_on:
+      - sonarqube
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+    volumes:
+      - .:/usr/src
+    working_dir: /usr/src
+
+  sonar-analysis:
+    image: maven:3.9.9-eclipse-temurin-21
+    container_name: finflow-sonar-analysis
+    profiles:
+      - tools
+    depends_on:
+      - sonarqube
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN:-}
+      SONAR_ADMIN_LOGIN: ${SONAR_ADMIN_LOGIN:-admin}
+      SONAR_ADMIN_PASSWORD: ${SONAR_ADMIN_PASSWORD:-admin}
+      MAVEN_REPO: /workspace/.m2/repository
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: ["bash", "/workspace/scan-sonarqube-services.sh"]
+
   service-registry:
     build:
       context: ./service-registry
@@ -228,3 +272,6 @@ services:
 
 volumes:
   postgres-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
