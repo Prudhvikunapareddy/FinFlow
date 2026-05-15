@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "installCommand": "npm --prefix finflow-frontend ci",
+  "buildCommand": "npm --prefix finflow-frontend run build",
+  "outputDirectory": "finflow-frontend/dist/finflow-frontend/browser",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -2,7 +2,10 @@
   "name": "finflow-frontend",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "npm@11.11.0",
+  "packageManager": "npm@10.9.4",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
