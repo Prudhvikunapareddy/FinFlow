@@ -93,4 +93,5 @@ export class LoginComponent {
     setTimeout(() => this.shakeSignal.set(true), 10);
     setTimeout(() => this.shakeSignal.set(false), 410);
   }
+  
 }

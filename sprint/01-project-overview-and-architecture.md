@@ -16,6 +16,7 @@ The project is built as a microservice system, not as one single backend. Each s
 - `config-repo`: local configuration files loaded by config-server.
 - `finflow-frontend`: Angular user interface.
 
+
 ## High-Level Architecture
 
 ```mermaid

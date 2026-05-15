@@ -31,8 +31,8 @@ public class ApplicationService {
         String applicantEmail = requireEmail(email);
 
         LoanApplication app = modelMapper.map(dto, LoanApplication.class);
-        app.setName(normalizeName(dto.getName()));
-        app.setLoanType(normalizeLoanType(dto.getLoanType()));
+        app.setName(normalizeName(dto.getName()));   
+        app.setLoanType(normalizeLoanType(dto.getLoanType()));   
         app.setTenureMonths(normalizeTenure(dto.getTenureMonths()));
         app.setApplicantName(applicantEmail);
         app.setStatus("DRAFT");
