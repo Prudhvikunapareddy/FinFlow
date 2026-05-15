@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "npm ci",
-  "buildCommand": "ng build",
+  "buildCommand": "npm run build:vercel",
   "outputDirectory": "dist/finflow-frontend/browser",
   "rewrites": [
     {

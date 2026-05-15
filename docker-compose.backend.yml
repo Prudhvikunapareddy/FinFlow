@@ -1,0 +1,188 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  zipkin:
+    image: openzipkin/zipkin:3.5.1
+    restart: unless-stopped
+
+  service-registry:
+    build:
+      context: ./service-registry
+    restart: unless-stopped
+    environment:
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+
+  config-server:
+    build:
+      context: ./config-server
+    restart: unless-stopped
+    depends_on:
+      - service-registry
+      - zipkin
+    environment:
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: config-server
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      CONFIG_REPO_LOCATION: file:/config-repo
+    volumes:
+      - ./config-repo:/config-repo:ro
+
+  auth-service:
+    build:
+      context: ./auth-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      service-registry:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: auth-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:-mysupersecuresecretkeymysupersecuresecretkey12345}
+      AUTH_BOOTSTRAP_ADMIN_EMAIL: ${AUTH_BOOTSTRAP_ADMIN_EMAIL:-admin@finflow.com}
+      AUTH_BOOTSTRAP_ADMIN_PASSWORD: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:-Admin@123}
+
+  application-service:
+    build:
+      context: ./application-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      service-registry:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: application-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      JWT_SECRET: ${JWT_SECRET:-mysupersecuresecretkeymysupersecuresecretkey12345}
+
+  document-service:
+    build:
+      context: ./document-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      service-registry:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: document-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      APPLICATION_SERVICE_URL: http://APPLICATION-SERVICE
+      JWT_SECRET: ${JWT_SECRET:-mysupersecuresecretkeymysupersecuresecretkey12345}
+
+  admin-service:
+    build:
+      context: ./admin-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      service-registry:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: admin-service
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      DOCUMENT_SERVICE_URL: http://DOCUMENT-SERVICE
+      AUTH_SERVICE_URL: http://AUTH-SERVICE
+      JWT_SECRET: ${JWT_SECRET:-mysupersecuresecretkeymysupersecuresecretkey12345}
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    restart: unless-stopped
+    depends_on:
+      - service-registry
+      - config-server
+      - auth-service
+      - application-service
+      - document-service
+      - admin-service
+    environment:
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://service-registry:8761/eureka
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      EUREKA_PREFER_IP: "false"
+      ZIPKIN_URL: http://zipkin:9411/api/v2/spans
+      JWT_SECRET: ${JWT_SECRET:-mysupersecuresecretkeymysupersecuresecretkey12345}
+      APP_CORS_ALLOWED_ORIGIN_PATTERNS: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:-http://localhost:*,http://127.0.0.1:*,https://*.vercel.app}
+    ports:
+      - "${API_GATEWAY_PORT:-8083}:8083"
+
+volumes:
+  postgres-data:
